@@ -1,0 +1,308 @@
+/* Global CSS Variables and Resets */
+:root {
+  --color-bg-base: #0f172a; /* Slate 900 */
+  --color-bg-panel: #1e293b; /* Slate 800 */
+  --color-bg-panel-light: #334155; /* Slate 700 */
+  --color-text-primary: #f8fafc; /* Slate 50 */
+  --color-text-secondary: #94a3b8; /* Slate 400 */
+  --color-text-muted: #64748b; /* Slate 500 */
+  
+  --color-accent-sublight: #06b6d4; /* Neon Cyan */
+  --color-accent-warp: #f59e0b; /* Deep Amber */
+  --color-accent-active: var(--color-accent-sublight);
+  
+  --color-border: #334155;
+  --color-border-accent: rgba(6, 182, 212, 0.3);
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, Monaco, monospace;
+}
+
+[data-drive="Warp"] {
+  --color-accent-active: var(--color-accent-warp);
+  --color-border-accent: rgba(245, 158, 11, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  overflow: hidden; /* 100vh non-scrollable requirement */
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+.app-root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography Helpers */
+.font-mono {
+  font-family: var(--font-mono);
+}
+.text-accent {
+  color: var(--color-accent-active);
+}
+.text-muted {
+  color: var(--color-text-muted);
+}
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+/* Forms and Inputs */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  margin: 10px 0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: var(--color-bg-panel-light);
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  border: 2px solid var(--color-bg-panel);
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: var(--color-accent-active);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -6px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+select, input[type="number"], input[type="text"], option, optgroup {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-family: var(--font-sans);
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+select:focus, input[type="number"]:focus {
+  border-color: var(--color-accent-active);
+}
+
+button {
+  background-color: var(--color-bg-panel-light);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+button:hover {
+  background-color: var(--color-border);
+}
+button.active {
+  background-color: rgba(255,255,255,0.1);
+  border-color: var(--color-accent-active);
+  color: var(--color-accent-active);
+}
+
+/* Dashboard Layout */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.dashboard-header {
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background-color: var(--color-bg-panel);
+  border-bottom: 2px solid var(--color-border-accent);
+}
+
+.dashboard-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dashboard-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.panel-left {
+  width: 25%;
+  background-color: var(--color-bg-base);
+  border-right: 1px solid var(--color-border);
+}
+
+.panel-center {
+  width: 50%;
+  background-color: #0b1121; /* Slightly darker for canvas */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.panel-right {
+  width: 25%;
+  background-color: var(--color-bg-base);
+  border-left: 1px solid var(--color-border);
+}
+
+/* Panel Sections */
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.config-section h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Placeholders */
+.webgl-placeholder {
+  flex: 0 0 65%;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  background-image: radial-gradient(circle at center, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.charts-placeholder {
+  flex: 0 0 35%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.02) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.02) 75%, rgba(255,255,255,0.02) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.02) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.02) 75%, rgba(255,255,255,0.02) 76%, transparent 77%, transparent);
+  background-size: 40px 40px;
+}
+
+/* Telemetry Blocks */
+.telemetry-block {
+  background-color: rgba(255,255,255,0.02);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.telemetry-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-accent-active);
+}
+
+.header-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.header-block-center {
+  align-items: center;
+}
+
+.header-block-right {
+  align-items: flex-end;
+}
+
+.header-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.header-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.status-gauge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 16px;
+  border-radius: 12px;
+  background-color: var(--color-bg-base);
+  border: 1px solid var(--color-border-accent);
+  color: var(--color-accent-active);
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5), inset 0 0 10px var(--color-border-accent);
+}

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en" style="width: 1280px; height: 1024px; overflow: hidden; position: relative;"><head></head><body class="h-screen w-screen flex flex-col antialiased selection:bg-primary selection:text-surface" style="cursor: grabbing;"><svg aria-hidden="true" class="inline-defs-container" style="position:absolute;width:0;height:0;overflow:hidden"></svg>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Astrometric Trajectory Planning &amp; Mission Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#472a00",
+                        "on-surface": "#dee3e6",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#2b3133",
+                        "secondary": "#ffb95f",
+                        "surface-container": "#1b2122",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#ffddb8",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#4cd7f6",
+                        "on-secondary-fixed": "#2a1700",
+                        "background": "#0e1416",
+                        "primary-container": "#06b6d4",
+                        "surface": "#020617",
+                        "surface-container-high": "#252b2d",
+                        "on-background": "#dee3e6",
+                        "outline": "#869397",
+                        "border": "#1e293b",
+                        "on-tertiary-fixed": "#2d1600",
+                        "tertiary-fixed": "#ffdcbf",
+                        "on-surface-variant": "#bcc9cd",
+                        "secondary-container": "#ee9800",
+                        "on-primary-fixed-variant": "#004e5c",
+                        "outline-variant": "#3d494c",
+                        "inverse-primary": "#00687a",
+                        "on-tertiary-container": "#5b3200",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "inverse-surface": "#dee3e6",
+                        "surface-container-low": "#171d1e",
+                        "on-tertiary-fixed-variant": "#6a3b00",
+                        "on-primary": "#003640",
+                        "primary-fixed": "#acedff",
+                        "surface-bright": "#343a3c",
+                        "tertiary-fixed-dim": "#ffb873",
+                        "canvas": "#0f172a",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "tertiary-container": "#e89337",
+                        "surface-container-lowest": "#090f11",
+                        "on-primary-fixed": "#001f26",
+                        "on-tertiary": "#4b2800",
+                        "primary": "#4cd7f6",
+                        "surface-variant": "#303638",
+                        "error": "#ef4444",
+                        "on-secondary-container": "#5b3800",
+                        "surface-tint": "#4cd7f6",
+                        "surface-container-highest": "#303638",
+                        "tertiary": "#ffb873",
+                        "on-primary-container": "#00424f",
+                        "surface-dim": "#0e1416"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1rem",
+                        "panel-center": "50%",
+                        "panel-left": "25%",
+                        "panel-right": "25%",
+                        "margin": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "section-heading": ["JetBrains Mono", "monospace"],
+                        "micro-label": ["JetBrains Mono", "monospace"],
+                        "clock-display": ["JetBrains Mono", "monospace"],
+                        "telemetry-readout": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "section-heading": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "micro-label": ["10px", { "lineHeight": "12px", "fontWeight": "400" }],
+                        "clock-display": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "telemetry-readout": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style class="">
+        body {
+            background-color: theme('colors.canvas');
+            color: theme('colors.on-surface');
+            overflow: hidden; /* Prevent scrolling */
+        }
+        
+        /* Custom scrollbar for inner panels if needed, though 100vh locked */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.border');
+        }
+        
+        .hud-bracket {
+            position: relative;
+        }
+        .hud-bracket::before, .hud-bracket::after {
+            content: '';
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            border-color: theme('colors.outline-variant');
+            border-style: solid;
+        }
+        .hud-bracket-top-left::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
+        .hud-bracket-top-right::after { top: 0; right: 0; border-width: 2px 2px 0 0; }
+        .hud-bracket-bottom-left::before { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+        .hud-bracket-bottom-right::after { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid theme('colors.border');
+            color: theme('colors.on-surface');
+            outline: none;
+        }
+        .terminal-input:focus {
+            border-bottom-color: theme('colors.primary');
+        }
+        
+        /* Grid background for tactical array */
+        .tactical-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, theme('colors.border') 1px, transparent 1px),
+                              linear-gradient(to bottom, theme('colors.border') 1px, transparent 1px);
+        }
+
+        .recessed-panel {
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            background-color: theme('colors.surface-container-lowest');
+            border: 1px solid theme('colors.outline-variant');
+        }
+
+        .raised-panel {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            background-color: theme('colors.surface-container');
+            border: 1px solid theme('colors.outline-variant');
+            border-radius: 6px;
+        }
+
+        /* Rotary Dial Styles */
+        .rotary-dial {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, theme('colors.surface-container-high') 0%, theme('colors.surface-container-lowest') 100%);
+            border: 2px solid theme('colors.outline-variant');
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 5px 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .rotary-knob {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, theme('colors.surface-container-high') 0%, theme('colors.surface') 100%);
+            border: 1px solid theme('colors.outline');
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.1);
+            position: relative;
+            transform: rotate(45deg); /* Initial rotation */
+        }
+
+        .rotary-indicator {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 15px;
+            background-color: theme('colors.secondary');
+            border-radius: 2px;
+            box-shadow: 0 0 5px theme('colors.secondary');
+        }
+
+        /* Vertical Slider Styles */
+        .vertical-slider-container {
+            height: 150px;
+            width: 30px;
+            background: theme('colors.surface-container-lowest');
+            border: 1px solid theme('colors.outline-variant');
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .vertical-slider-track {
+            width: 4px;
+            height: 100%;
+            background: theme('colors.border');
+            position: relative;
+        }
+
+        .vertical-slider-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: theme('colors.secondary');
+            box-shadow: 0 0 5px theme('colors.secondary');
+        }
+
+        .vertical-slider-thumb {
+            width: 24px;
+            height: 12px;
+            background: theme('colors.surface-container-highest');
+            border: 1px solid theme('colors.outline');
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .vertical-slider-thumb::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-right: 6px solid theme('colors.secondary');
+            position: absolute;
+            left: -8px;
+        }
+
+        /* Horizontal Slider */
+        .horizontal-slider-container {
+            width: 100%;
+            height: 20px;
+            background: theme('colors.surface-container-lowest');
+            border: 1px solid theme('colors.outline-variant');
+            border-radius: 2px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .horizontal-slider-track {
+            width: 100%;
+            height: 4px;
+            background: theme('colors.border');
+            position: relative;
+            margin: 0 10px;
+        }
+
+        .horizontal-slider-fill {
+            position: absolute;
+            left: 0;
+            height: 100%;
+            background: theme('colors.primary');
+            box-shadow: 0 0 5px theme('colors.primary');
+        }
+
+        .horizontal-slider-thumb {
+            width: 12px;
+            height: 24px;
+            background: theme('colors.surface-container-highest');
+            border: 1px solid theme('colors.outline');
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            width: 40px;
+            height: 20px;
+            background: theme('colors.surface-container-lowest');
+            border: 1px solid theme('colors.outline-variant');
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .toggle-knob {
+            width: 16px;
+            height: 16px;
+            background: theme('colors.surface-container-high');
+            border: 1px solid theme('colors.outline');
+            border-radius: 50%;
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(20px);
+            background: theme('colors.primary');
+            border-color: theme('colors.primary-fixed');
+            box-shadow: 0 0 5px theme('colors.primary');
+        }
+
+        /* Radio Button Replacement */
+        .custom-radio {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid theme('colors.outline');
+            background: theme('colors.surface-container-lowest');
+            position: relative;
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
+        }
+        .custom-radio.active {
+            border-color: theme('colors.secondary');
+        }
+        .custom-radio.active::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: theme('colors.secondary');
+            box-shadow: 0 0 4px theme('colors.secondary');
+        }
+
+        /* Graph grids */
+        .graph-grid {
+            background-size: 20px 20px;
+            background-image: linear-gradient(to right, rgba(30, 41, 59, 0.3) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(30, 41, 59, 0.3) 1px, transparent 1px);
+        }
+
+    </style>
+<style class="">*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}[type='text'],input:where(:not([type])),[type='email'],[type='url'],[type='password'],[type='number'],[type='date'],[type='datetime-local'],[type='month'],[type='search'],[type='tel'],[type='time'],[type='week'],[multiple],textarea,select{-webkit-appearance:none;appearance:none;background-color:#fff;border-color:#6b7280;border-width:1px;border-radius:0px;padding-top:0.5rem;padding-right:0.75rem;padding-bottom:0.5rem;padding-left:0.75rem;font-size:1rem;line-height:1.5rem;--tw-shadow:0 0 #0000;}[type='text']:focus, input:where(:not([type])):focus, [type='email']:focus, [type='url']:focus, [type='password']:focus, [type='number']:focus, [type='date']:focus, [type='datetime-local']:focus, [type='month']:focus, [type='search']:focus, [type='tel']:focus, [type='time']:focus, [type='week']:focus, [multiple]:focus, textarea:focus, select:focus{outline:2px solid transparent;outline-offset:2px;--tw-ring-inset:var(--tw-empty,/*!*/ /*!*/);--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:#2563eb;--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);border-color:#2563eb}input::placeholder,textarea::placeholder{color:#6b7280;opacity:1}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-date-and-time-value{min-height:1.5em;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit,::-webkit-datetime-edit-year-field,::-webkit-datetime-edit-month-field,::-webkit-datetime-edit-day-field,::-webkit-datetime-edit-hour-field,::-webkit-datetime-edit-minute-field,::-webkit-datetime-edit-second-field,::-webkit-datetime-edit-millisecond-field,::-webkit-datetime-edit-meridiem-field{padding-top:0;padding-bottom:0}select{background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-position:right 0.5rem center;background-repeat:no-repeat;background-size:1.5em 1.5em;padding-right:2.5rem;print-color-adjust:exact}[multiple],[size]:where(select:not([size="1"])){background-image:initial;background-position:initial;background-repeat:unset;background-size:initial;padding-right:0.75rem;print-color-adjust:unset}[type='checkbox'],[type='radio']{-webkit-appearance:none;appearance:none;padding:0;print-color-adjust:exact;display:inline-block;vertical-align:middle;background-origin:border-box;-webkit-user-select:none;user-select:none;flex-shrink:0;height:1rem;width:1rem;color:#2563eb;background-color:#fff;border-color:#6b7280;border-width:1px;--tw-shadow:0 0 #0000}[type='checkbox']{border-radius:0px}[type='radio']{border-radius:100%}[type='checkbox']:focus,[type='radio']:focus{outline:2px solid transparent;outline-offset:2px;--tw-ring-inset:var(--tw-empty,/*!*/ /*!*/);--tw-ring-offset-width:2px;--tw-ring-offset-color:#fff;--tw-ring-color:#2563eb;--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}[type='checkbox']:checked,[type='radio']:checked{border-color:transparent;background-color:currentColor;background-size:100% 100%;background-position:center;background-repeat:no-repeat}[type='checkbox']:checked{background-image:url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");}@media (forced-colors: active) {[type='checkbox']:checked{-webkit-appearance:auto;appearance:auto}}[type='radio']:checked{background-image:url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");}@media (forced-colors: active) {[type='radio']:checked{-webkit-appearance:auto;appearance:auto}}[type='checkbox']:checked:hover,[type='checkbox']:checked:focus,[type='radio']:checked:hover,[type='radio']:checked:focus{border-color:transparent;background-color:currentColor}[type='checkbox']:indeterminate{background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");border-color:transparent;background-color:currentColor;background-size:100% 100%;background-position:center;background-repeat:no-repeat;}@media (forced-colors: active) {[type='checkbox']:indeterminate{-webkit-appearance:auto;appearance:auto}}[type='checkbox']:indeterminate:hover,[type='checkbox']:indeterminate:focus{border-color:transparent;background-color:currentColor}[type='file']{background:unset;border-color:inherit;border-width:0;border-radius:0;padding:0;font-size:unset;line-height:inherit}[type='file']:focus{outline:1px solid ButtonText;outline:1px auto -webkit-focus-ring-color}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.inset-y-0{top:0px;bottom:0px}.-bottom-4{bottom:-1rem}.bottom-4{bottom:1rem}.left-0{left:0px}.left-10{left:2.5rem}.left-2{left:0.5rem}.left-full{left:100%}.right-1{right:0.25rem}.right-2{right:0.5rem}.top-0{top:0px}.top-1{top:0.25rem}.top-2{top:0.5rem}.top-4{top:1rem}.z-10{z-index:10}.z-50{z-index:50}.mb-1{margin-bottom:0.25rem}.mb-2{margin-bottom:0.5rem}.ml-1{margin-left:0.25rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-20{margin-top:5rem}.mt-4{margin-top:1rem}.flex{display:flex}.h-16{height:4rem}.h-2\/5{height:40%}.h-20{height:5rem}.h-3\/5{height:60%}.h-32{height:8rem}.h-\[1024px\]{height:1024px}.h-\[20\%\]{height:20%}.h-\[80\%\]{height:80%}.h-\[calc\(1024px-80px\)\]{height:calc(1024px - 80px)}.h-full{height:100%}.w-1\/2{width:50%}.w-1\/3{width:33.333333%}.w-1\/4{width:25%}.w-12{width:3rem}.w-16{width:4rem}.w-2\/3{width:66.666667%}.w-8{width:2rem}.w-full{width:100%}.w-screen{width:100vw}.flex-1{flex:1 1 0%}.origin-bottom-left{transform-origin:bottom left}.-translate-x-4{--tw-translate-x:-1rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-y-full{--tw-translate-y:100%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-rotate-90{--tw-rotate:-90deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.cursor-text{cursor:text}.appearance-none{-webkit-appearance:none;appearance:none}.flex-col{flex-direction:column}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.whitespace-nowrap{white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-md{border-radius:0.375rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-border{--tw-border-opacity:1;border-color:rgb(30 41 59 / var(--tw-border-opacity, 1))}.border-outline{--tw-border-opacity:1;border-color:rgb(134 147 151 / var(--tw-border-opacity, 1))}.border-outline-variant{--tw-border-opacity:1;border-color:rgb(61 73 76 / var(--tw-border-opacity, 1))}.border-primary{--tw-border-opacity:1;border-color:rgb(76 215 246 / var(--tw-border-opacity, 1))}.border-secondary{--tw-border-opacity:1;border-color:rgb(255 185 95 / var(--tw-border-opacity, 1))}.bg-canvas{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-error{--tw-bg-opacity:1;background-color:rgb(239 68 68 / var(--tw-bg-opacity, 1))}.bg-secondary{--tw-bg-opacity:1;background-color:rgb(255 185 95 / var(--tw-bg-opacity, 1))}.bg-surface-container{--tw-bg-opacity:1;background-color:rgb(27 33 34 / var(--tw-bg-opacity, 1))}.bg-surface-container-highest{--tw-bg-opacity:1;background-color:rgb(48 54 56 / var(--tw-bg-opacity, 1))}.bg-surface-container-lowest{--tw-bg-opacity:1;background-color:rgb(9 15 17 / var(--tw-bg-opacity, 1))}.p-1{padding:0.25rem}.p-2{padding:0.5rem}.p-3{padding:0.75rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.pb-1{padding-bottom:0.25rem}.pb-4{padding-bottom:1rem}.pl-8{padding-left:2rem}.pr-1{padding-right:0.25rem}.pt-2{padding-top:0.5rem}.text-center{text-align:center}.text-right{text-align:right}.font-clock-display{font-family:JetBrains Mono, monospace}.font-micro-label{font-family:JetBrains Mono, monospace}.font-section-heading{font-family:JetBrains Mono, monospace}.font-telemetry-readout{font-family:JetBrains Mono, monospace}.text-\[10px\]{font-size:10px}.text-\[12px\]{font-size:12px}.text-\[13px\]{font-size:13px}.text-\[14px\]{font-size:14px}.text-\[16px\]{font-size:16px}.text-\[24px\]{font-size:24px}.text-\[8px\]{font-size:8px}.text-\[9px\]{font-size:9px}.text-clock-display{font-size:20px;line-height:24px;letter-spacing:-0.02em;font-weight:700}.text-micro-label{font-size:10px;line-height:12px;font-weight:400}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-telemetry-readout{font-size:14px;line-height:20px;font-weight:400}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.uppercase{text-transform:uppercase}.tracking-tighter{letter-spacing:-0.05em}.tracking-widest{letter-spacing:0.1em}.text-on-surface{--tw-text-opacity:1;color:rgb(222 227 230 / var(--tw-text-opacity, 1))}.text-on-surface-variant{--tw-text-opacity:1;color:rgb(188 201 205 / var(--tw-text-opacity, 1))}.text-primary{--tw-text-opacity:1;color:rgb(76 215 246 / var(--tw-text-opacity, 1))}.text-secondary{--tw-text-opacity:1;color:rgb(255 185 95 / var(--tw-text-opacity, 1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.shadow-\[0_0_10px_rgba\(239\2c 68\2c 68\2c 0\.3\)\]{--tw-shadow:0 0 10px rgba(239,68,68,0.3);--tw-shadow-colored:0 0 10px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_15px_rgba\(76\2c 215\2c 246\2c 0\.15\)\]{--tw-shadow:0 0 15px rgba(76,215,246,0.15);--tw-shadow-colored:0 0 15px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.selection\:bg-primary *::selection{--tw-bg-opacity:1;background-color:rgb(76 215 246 / var(--tw-bg-opacity, 1))}.selection\:text-surface *::selection{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.selection\:bg-primary::selection{--tw-bg-opacity:1;background-color:rgb(76 215 246 / var(--tw-bg-opacity, 1))}.selection\:text-surface::selection{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.focus\:border-primary:focus{--tw-border-opacity:1;border-color:rgb(76 215 246 / var(--tw-border-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}@media (min-width: 768px){.md\:w-panel-center{width:50%}.md\:w-panel-left{width:25%}.md\:w-panel-right{width:25%}.md\:flex-row{flex-direction:row}}</style>
+<!-- Global Header -->
+<header class="fixed top-0 left-0 w-full h-20 border-b border-border bg-surface-container-lowest flex justify-between items-center px-4 z-50 shadow-md">
+<!-- Header Title -->
+<div class="absolute top-1 left-0 w-full text-center pointer-events-none">
+<h1 class="font-section-heading text-[14px] text-on-surface-variant tracking-widest uppercase">Astrometric Trajectory Planning &amp; Mission Control</h1>
+</div>
+<!-- Left Header Area -->
+<div class="flex items-center gap-4 mt-4 w-1/3">
+<div class="flex flex-col">
+<span class="font-micro-label text-micro-label text-on-surface-variant uppercase">ORIGIN TIME (Scheduled)</span>
+<div class="border border-outline-variant rounded px-3 py-1 bg-surface-container-lowest shadow-inner flex items-center gap-2">
+<span class="font-clock-display text-clock-display text-primary tracking-tighter">2030-11-04 12:00:00 UTC</span>
+</div>
+</div>
+<!-- Amber Light Indicator SVG -->
+<svg height="40" viewbox="0 0 40 40" width="40">
+<defs>
+<radialgradient cx="50%" cy="50%" fx="50%" fy="50%" id="amberGlow" r="50%">
+<stop offset="0%" stop-color="theme('colors.secondary')" stop-opacity="1"></stop>
+<stop offset="100%" stop-color="theme('colors.secondary')" stop-opacity="0"></stop>
+</radialgradient>
+</defs>
+<circle cx="20" cy="20" fill="url(#amberGlow)" r="20"></circle>
+<path d="M 12 15 L 28 15 L 28 30 L 12 30 Z" fill="theme('colors.secondary-container')" stroke="theme('colors.on-secondary')" stroke-width="1"></path>
+<path d="M 10 10 L 30 10 L 28 15 L 12 15 Z" fill="theme('colors.surface-container-highest')" stroke="theme('colors.outline')"></path>
+<path d="M 10 30 L 30 30 L 30 35 L 10 35 Z" fill="theme('colors.surface-container-highest')" stroke="theme('colors.outline')"></path>
+<line stroke="theme('colors.on-secondary')" stroke-width="1" x1="16" x2="16" y1="15" y2="30"></line>
+<line stroke="theme('colors.on-secondary')" stroke-width="1" x1="20" x2="20" y1="15" y2="30"></line>
+<line stroke="theme('colors.on-secondary')" stroke-width="1" x1="24" x2="24" y1="15" y2="30"></line>
+</svg>
+</div>
+<!-- Center Header Area (Current Time) -->
+<div class="flex flex-col items-center justify-center mt-4 w-1/3">
+<div class="border border-primary rounded-md px-6 py-2 bg-surface-container shadow-[0_0_15px_rgba(76,215,246,0.15)] flex flex-col items-center">
+<span class="font-micro-label text-micro-label text-primary uppercase mb-1">CURRENT UTC TIME</span>
+<div class="font-clock-display text-[24px] font-bold text-primary tracking-tighter" id="sys-clock">2030-11-07 23:30:31.094 UTC</div>
+<span class="font-micro-label text-[10px] text-secondary uppercase mt-1">IN-FLIGHT: ACCELERATION/DECELERATION BALANCE</span>
+</div>
+</div>
+<!-- Right Header Area -->
+<div class="flex items-center justify-end gap-4 mt-4 w-1/3">
+<!-- Knob SVG -->
+<div class="w-16 h-16 relative flex items-center justify-center bg-surface-container rounded-md border border-outline-variant shadow-md">
+<svg height="40" viewbox="0 0 40 40" width="40">
+<circle cx="20" cy="20" fill="theme('colors.surface-container-highest')" r="18" stroke="theme('colors.outline')" stroke-width="2"></circle>
+<circle cx="20" cy="20" fill="theme('colors.surface-container-lowest')" r="12" stroke="theme('colors.outline-variant')" stroke-width="1"></circle>
+<line stroke="theme('colors.primary')" stroke-linecap="round" stroke-width="3" x1="20" x2="10" y1="20" y2="10"></line>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-micro-label text-micro-label text-on-surface-variant uppercase text-right">DESTINATION (Scheduled ETA)</span>
+<div class="border border-outline-variant rounded px-3 py-1 bg-surface-container-lowest shadow-inner flex items-center gap-2">
+<span class="font-clock-display text-clock-display text-primary tracking-tighter">2030-11-13 14:25:12 UTC</span>
+</div>
+<span class="font-micro-label text-[9px] text-on-surface-variant uppercase text-right mt-1">ASTROMETRIC REGIME &amp; DRIVE SYSTEM</span>
+</div>
+</div>
+</header>
+<!-- Main Layout Grid -->
+<main class="flex-1 mt-20 flex flex-col md:flex-row p-2 gap-2 w-full h-[calc(100vh-80px)] bg-canvas overflow-hidden">
+<!-- Left Panel: Flight Configuration (25%) -->
+<aside class="w-full md:w-panel-left raised-panel flex flex-col h-full overflow-y-auto">
+<div class="p-2 border-b border-outline-variant bg-surface-container">
+<h2 class="font-section-heading text-[13px] text-on-surface uppercase text-center tracking-widest">FLIGHT CONFIGURATION PANEL</h2>
+</div>
+<div class="p-3 flex flex-col gap-3 flex-1">
+<!-- Target Coordinates Recessed Block -->
+<div class="recessed-panel rounded p-3 flex flex-col gap-3">
+<h3 class="font-section-heading text-on-surface uppercase border-b border-outline-variant pb-1">TARGET COORDINATES</h3>
+<div class="flex gap-2">
+<div class="flex-1 flex flex-col gap-1">
+<label class="font-micro-label text-on-surface-variant">Origin Node</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface font-telemetry-readout text-telemetry-readout p-1 text-sm appearance-none focus:outline-none focus:border-primary">
+<option>Earth</option>
+</select>
+<div class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-primary text-xs">▼</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<label class="font-micro-label text-on-surface-variant">Destination Node</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface font-telemetry-readout text-telemetry-readout p-1 text-sm appearance-none focus:outline-none focus:border-primary">
+<option>Saturn</option>
+</select>
+<div class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-primary text-xs">▼</div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 pt-2 border-t border-outline-variant">
+<span class="font-micro-label text-on-surface-variant">Astrometric Regime</span>
+<div class="flex flex-col gap-1">
+<label class="flex items-center gap-2 cursor-pointer">
+<div class="custom-radio active border-secondary"></div>
+<span class="font-telemetry-readout text-[12px] text-secondary">Intrasystem</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<div class="custom-radio"></div>
+<span class="font-telemetry-readout text-[12px] text-secondary">Interstellar</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Kinematic Configuration Recessed Block -->
+<div class="recessed-panel rounded p-3 flex flex-col gap-4"><h3 class="font-section-heading text-on-surface uppercase border-b border-outline-variant pb-1">KINEMATIC CONFIGURATION</h3>
+<div class="flex flex-col gap-6">
+<!-- Acceleration Profile Dial -->
+<div class="flex flex-col items-center gap-2">
+<label class="font-micro-label text-on-surface">Acceleration Profile (a)</label>
+<div class="relative w-24 h-24 flex items-center justify-center"><img class="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRYnGD06QLrIQJ_P7sH4dCiS3EKdmQphRno5js5JxDpmpajHGvkpL3TlnKShE2gilYzE2sIIw5RSFcMsF3qWUReKN2IAziaK-gp1AHXDmTWOOwkdCVj2FClxNsw2ZZiJgmuJi6vXJfWp3RxpSGqz9dAGk2Ch2TIB5GnxQKO_62wdlYlfGWUHpqOv6zBdh4mwAvlg1PBM1RScchUe3glHCVU0SZcm3EZMfckhD1L-YfCQpEMKu5ljMRg8DRkZ_CRbR2pmdJmNadhjqC" style="z-index: 0;"/>
+<svg class="absolute inset-0 w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="40" stroke="#4cd7f6" stroke-dasharray="125 251" stroke-width="4"></circle>
+<circle cx="50" cy="50" fill="none" r="40" stroke="#ef4444" stroke-dasharray="125 251" stroke-dashoffset="-125" stroke-width="4"></circle>
+<line stroke="#dee3e6" stroke-width="2" transform="rotate(90 50 50)" x1="50" x2="50" y1="10" y2="18"></line>
+</svg>
+<div class="w-16 h-16 rounded-full bg-surface-container-highest border border-outline flex items-center justify-center shadow-lg relative">
+<div class="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-6 bg-on-surface rounded-full"></div>
+</div>
+</div>
+<div class="w-full flex justify-between px-4 text-[10px] font-telemetry-readout text-on-surface-variant">
+<span class="">0.1G</span>
+<span class="">3.0G</span>
+</div>
+</div>
+<!-- Velocity Ceiling Limit Slider -->
+<div class="flex flex-col gap-2">
+<label class="font-micro-label text-on-surface text-center">Velocity Ceiling Limit (v<sub>max</sub>)</label>
+<div class="relative px-2">
+<div class="h-4 w-full bg-surface-container-lowest border border-outline-variant rounded-sm flex items-center relative">
+<div class="h-1 bg-primary/50 absolute left-0" style="width: 80%"></div>
+<div class="w-3 h-6 bg-outline border border-on-surface rounded-sm absolute shadow-md" style="left: 80%; transform: translateX(-50%)"></div>
+</div>
+<div class="flex justify-between mt-1 h-2 px-1">
+<div class="border-l border-outline-variant h-full"></div>
+<div class="border-l border-outline-variant h-full"></div>
+<div class="border-l border-outline-variant h-full"></div>
+</div>
+<div class="flex justify-between text-[10px] font-telemetry-readout text-on-surface-variant">
+<span class="">0.01c</span>
+<span class="text-secondary">0.90c</span>
+<span class="">0.99c</span>
+</div>
+</div>
+</div>
+<!-- Hull Structural Mass Section -->
+<div class="flex flex-col items-center gap-4">
+<label class="font-micro-label text-on-surface uppercase tracking-wider">Hull Structural Mass (M<sub>0</sub>)</label>
+<!-- Redesigned Dial -->
+<div class="relative w-24 h-24 flex items-center justify-center">
+<img class="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwUH8eCkSVGCglAqzVTAoZbve_OYwV9g7ji2DzFlq-JUVU18jQIOIeVzZ9rWYgi1skByukKAOOD0EQxUy68fcK1vgSs91CvJxNI3bFY7lZHxUvmB9YTz2lcxeJiQ-v_8wZ0WaZDRL3ohxzje-ueWtAgRNqKOmAQWDW3-srTLZ0elpEOqsLZuEuwLO_w8zaZgZJRIKDNOByDcmnfrQwYt-86PX1-Iln43W7amzGY-gi8QoYBX1XhL7hYET9pI-e9JCfMp2IYECjpub9" style="z-index: 0;"/>
+</div>
+<!-- Limit Labels -->
+<div class="w-full flex justify-between px-2 text-[9px] font-telemetry-readout leading-tight">
+<div class="flex flex-col">
+<span class="text-on-surface-variant uppercase">Scout Ship</span>
+<span class="text-on-surface font-bold">25 TONS</span>
+</div>
+<div class="flex flex-col text-right">
+<span class="text-on-surface-variant uppercase">Colony Ship</span>
+<span class="text-on-surface font-bold">10,000,000 TONS</span>
+</div>
+</div>
+<!-- Active Readout Badge -->
+<div class="w-full bg-black/40 border border-primary/30 rounded-sm py-1.5 px-3 flex justify-center items-center">
+<span class="text-[10px] font-telemetry-readout tracking-widest text-primary uppercase">
+      Active: <span class="text-on-surface">5,000,000 TONS</span>
+</span>
+</div>
+</div>
+</div></div>
+<!-- Drive Type Selection Recessed Block -->
+<div class="recessed-panel rounded p-3 flex flex-col gap-2">
+<h3 class="font-section-heading text-on-surface uppercase border-b border-outline-variant pb-1">DRIVE TYPE SELECTION</h3>
+<div class="flex items-center justify-between mb-2">
+<span class="bg-surface-container px-2 py-0.5 border border-outline-variant rounded font-telemetry-readout text-sm text-on-surface">1.2G</span>
+<div class="flex items-center gap-3">
+<label class="flex items-center gap-1 cursor-pointer">
+<div class="custom-radio active border-secondary"></div>
+<span class="font-telemetry-readout text-[12px] text-on-surface">Sub-light</span>
+</label>
+<label class="flex items-center gap-1 cursor-pointer">
+<div class="custom-radio"></div>
+<span class="font-telemetry-readout text-[12px] text-on-surface-variant">/Superluminal</span>
+</label>
+</div>
+</div>
+<div class="flex">
+<div class="flex flex-col gap-1 w-1/2">
+<label class="flex items-center gap-2 cursor-pointer">
+<div class="custom-radio"></div>
+<span class="font-telemetry-readout text-[12px] text-on-surface-variant">Chemical</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<div class="custom-radio"></div>
+<span class="font-telemetry-readout text-[12px] text-on-surface-variant">Ion</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<div class="custom-radio"></div>
+<span class="font-telemetry-readout text-[12px] text-on-surface-variant">Fusion tokamak</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<div class="custom-radio active border-secondary"></div>
+<span class="font-telemetry-readout text-[12px] text-secondary">Antimatter rocket</span>
+</label>
+</div>
+<div class="w-1/2 flex flex-col items-end justify-end">
+<span class="font-micro-label text-on-surface-variant">Cruiser Class:</span>
+<span class="bg-surface-container px-3 py-1 border border-outline-variant rounded font-telemetry-readout text-sm text-on-surface mt-1">2000 tons</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Center Panel: Tactical Visualization Array (50%) -->
+<section class="w-full md:w-panel-center raised-panel flex flex-col h-full overflow-hidden">
+<div class="p-2 border-b border-outline-variant bg-surface-container">
+<h2 class="font-section-heading text-[13px] text-on-surface uppercase text-center tracking-widest">TACTICAL VISUALIZATION ARRAY</h2>
+</div>
+<div class="flex-1 flex flex-col p-2 gap-2 bg-surface-container-lowest">
+<!-- Main Orbital View (Top Half) -->
+<div class="relative w-full h-3/5 border border-outline-variant rounded bg-canvas overflow-hidden flex items-center justify-center tactical-grid">
+<div class="absolute top-2 left-2 z-10 pointer-events-none">
+<div class="font-telemetry-readout text-[14px] text-on-surface">Interactive 3D Celestial Map</div>
+<div class="font-micro-label text-on-surface-variant">Point cloud pulled from Gaia database.</div>
+</div>
+<!-- Starfield / Trajectory SVG -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="xMidYMid slice" viewbox="0 0 100 100"><path class="" d="M 20 80 Q 40 20 80 30" fill="none" stroke="#4cd7f6" stroke-dasharray="1 1" stroke-width="0.5"></path><circle class="" cx="20" cy="80" fill="#4cd7f6" r="1"></circle><circle class="" cx="50" cy="40" fill="#ffb95f" r="0.8"></circle><circle class="" cx="80" cy="30" fill="#e89337" r="2"></circle><ellipse class="" cx="80" cy="30" fill="none" rx="4" ry="1" stroke="#e89337" stroke-width="0.3" transform="rotate(-15 80 30)"></ellipse><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="18" y="85">Origin</text><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="18" y="88">Earth</text><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="52" y="45">Midpoint</text><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="85" y="32">Destination</text><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="85" y="35">Saturn</text><line class="" stroke="#4cd7f6" stroke-width="0.2" x1="22" x2="30" y1="78" y2="75"></line><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="31" y="75">Acceleration phase</text><line class="" stroke="#ffb95f" stroke-width="0.2" x1="49" x2="45" y1="39" y2="35"></line><line class="" stroke="#ffb95f" stroke-width="0.2" x1="75" x2="75" y1="28" y2="20"></line><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="65" y="19">FLIP &amp; DECEL START</text><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="72" y="42">Coast</text><text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="2" x="72" y="45">phase</text></svg>
+</div>
+<!-- Graphs Container (Bottom Half) -->
+<div class="flex gap-2 h-2/5">
+<!-- Kinematics Graph -->
+<div class="w-2/3 border border-outline-variant rounded bg-canvas relative p-2 flex flex-col">
+<h3 class="font-section-heading text-[12px] text-on-surface mb-2">Kinematics Graph (Velocity Curve)</h3>
+<div class="flex-1 relative graph-grid">
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100"><line class="" stroke="#475569" stroke-width="0.8" x1="10" x2="10" y1="10" y2="85"></line> <line class="" stroke="#475569" stroke-width="0.8" x1="10" x2="95" y1="85" y2="85"></line> <polygon class="" fill="rgba(76, 215, 246, 0.4)" points="10,85 30,30 30,85"></polygon> <polygon class="" fill="rgba(30, 41, 59, 0.6)" points="30,30 80,30 80,85 30,85"></polygon> <polygon class="" fill="rgba(239, 68, 68, 0.4)" points="80,30 90,85 80,85"></polygon> <line class="" stroke="#4cd7f6" stroke-width="1.5" x1="10" x2="30" y1="85" y2="30"></line> <line class="" stroke="#ffffff" stroke-width="1.5" x1="30" x2="80" y1="30" y2="30"></line> <line class="" stroke="#ef4444" stroke-width="1.5" x1="80" x2="90" y1="30" y2="85"></line> <text class="" fill="#4cd7f6" font-family="JetBrains Mono" font-size="3.5" font-weight="bold" text-anchor="middle" x="20" y="40">Acceleration</text> <text class="" fill="#4cd7f6" font-family="JetBrains Mono" font-size="3.5" font-weight="bold" text-anchor="middle" x="20" y="44">Zones</text> <text class="" fill="#ffffff" font-family="JetBrains Mono" font-size="3.5" font-weight="bold" text-anchor="middle" x="55" y="28">cruise plateau</text> <text class="" fill="#ef4444" font-family="JetBrains Mono" font-size="3.5" font-weight="bold" text-anchor="middle" x="85" y="40">Deceleration</text> <text class="" fill="#ef4444" font-family="JetBrains Mono" font-size="3.5" font-weight="bold" text-anchor="middle" x="85" y="44">Zones</text> <text class="" fill="#4cd7f6" font-family="JetBrains Mono" font-size="3" text-anchor="middle" x="20" y="82">48h</text> <text class="" fill="#ffffff" font-family="JetBrains Mono" font-size="3" text-anchor="middle" x="55" y="82">120h</text> <text class="" fill="#ef4444" font-family="JetBrains Mono" font-size="3" text-anchor="middle" x="85" y="82">48h</text> <text class="" fill="#94a3b8" font-family="JetBrains Mono" font-size="3.5" transform="rotate(-90 8 55)" x="8" y="55">Velocity (km/s)</text> <text class="" fill="#dee3e6" font-family="JetBrains Mono" font-size="3.5" text-anchor="middle" x="55" y="98">Time (Days)</text> <g fill="#dee3e6" font-family="JetBrains Mono" font-size="3.5" text-anchor="middle"> <text x="10" y="92">0</text> <text x="20" y="92">1</text> <text x="30" y="92">2</text> <text x="40" y="92">3</text> <text x="50" y="92">4</text> <text x="60" y="92">5</text> <text x="70" y="92">6</text> <text x="80" y="92">7</text> <text x="85" y="92">8</text> <text x="90" y="92">9</text> </g> <g stroke="#dee3e6" stroke-width="0.5"> <line x1="10" x2="10" y1="85" y2="87"></line> <line x1="20" x2="20" y1="85" y2="87"></line> <line x1="30" x2="30" y1="85" y2="87"></line> <line x1="40" x2="40" y1="85" y2="87"></line> <line x1="50" x2="50" y1="85" y2="87"></line> <line x1="60" x2="60" y1="85" y2="87"></line> <line x1="70" x2="70" y1="85" y2="87"></line> <line x1="80" x2="80" y1="85" y2="87"></line> <line x1="85" x2="85" y1="85" y2="87"></line> <line x1="90" x2="90" y1="85" y2="87"></line> </g></svg>
+</div>
+</div>
+<!-- Position Graph -->
+<div class="w-1/3 border border-outline-variant rounded bg-canvas relative p-2 flex flex-col">
+<h3 class="font-section-heading text-[12px] text-on-surface mb-2">Position Graph</h3>
+<div class="flex-1 relative graph-grid">
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100"><line class="" stroke="#475569" stroke-width="0.8" x1="15" x2="15" y1="10" y2="90"></line> <line class="" stroke="#475569" stroke-width="0.8" x1="15" x2="95" y1="90" y2="90"></line> <path class="" d="M 15 90 C 40 90, 60 10, 90 10" fill="none" stroke="#4cd7f6" stroke-width="2"></path> <text class="" fill="#94a3b8" font-family="JetBrains Mono" font-size="4.5" transform="rotate(-90 10 50)" x="10" y="50">Position</text> <text class="" fill="#94a3b8" font-family="JetBrains Mono" font-size="3.5" text-anchor="middle" x="55" y="98">Distance</text> <text class="" fill="#94a3b8" font-family="JetBrains Mono" font-size="3.5" x="10" y="10">1</text> <text class="" fill="#94a3b8" font-family="JetBrains Mono" font-size="3.5" x="10" y="90">0</text> <text class="" fill="#94a3b8" font-family="JetBrains Mono" font-size="3.5" x="15" y="95">0</text></svg>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel: Telemetry & HUD (25%) -->
+<aside class="w-full md:w-panel-right raised-panel flex flex-col h-full overflow-y-auto">
+<div class="p-2 border-b border-outline-variant bg-surface-container">
+<h2 class="font-section-heading text-[13px] text-on-surface uppercase text-center tracking-widest">TELEMETRY &amp; RELATIVISTIC HUD</h2>
+</div>
+<div class="p-3 flex flex-col gap-3 flex-1">
+<!-- Chronological Telemetry -->
+<div class="recessed-panel rounded p-3 flex flex-col gap-2">
+<h3 class="font-section-heading text-on-surface uppercase border-b border-outline-variant pb-1 text-center">CHRONOLOGICAL TELEMETRY</h3>
+<div class="flex flex-col gap-1 text-center mt-1">
+<span class="font-micro-label text-on-surface-variant">Station Observer Clock (Total Mission Elapsed)</span>
+<div class="font-telemetry-readout text-primary bg-surface-container border border-outline-variant rounded py-1">3 Days, 02 Hours, 15 Mins., 07:33:01</div>
+</div>
+<div class="flex flex-col gap-1 text-center mt-1">
+<span class="font-micro-label text-on-surface-variant">Onboard Chronometer (Total Mission Elapsed)</span>
+<div class="font-telemetry-readout text-primary bg-surface-container border border-outline-variant rounded py-1">3 Days, 02 Hours, 15 Mins., 07:33:37</div>
+</div>
+<div class="flex flex-col gap-1 text-center mt-1">
+<span class="font-micro-label text-on-surface-variant">Origin Time Clock (Scheduled UTC)</span>
+<div class="font-telemetry-readout text-on-surface bg-surface-container border border-outline-variant rounded py-1 text-sm">2030-11-04 12:00:00 UTC</div>
+</div>
+<div class="flex flex-col gap-1 text-center mt-1">
+<span class="font-micro-label text-on-surface-variant">Destination Arrival Clock (Scheduled ETA UTC)</span>
+<div class="font-telemetry-readout text-on-surface bg-surface-container border border-outline-variant rounded py-1 text-sm">2030-11-13 14:25:12 UTC</div>
+</div>
+<!-- Lorentz Factor Widget -->
+<div class="flex items-center justify-between border border-outline-variant rounded bg-surface-container p-2 mt-2">
+<div class="flex flex-col">
+<span class="font-telemetry-readout text-[12px] text-on-surface">Lorentz Dilation Factor Widget (γ)</span>
+<span class="font-micro-label text-on-surface-variant">Lorentz factor multiplier</span>
+</div>
+<span class="font-clock-display text-[16px] text-primary bg-canvas px-2 py-1 rounded border border-outline shadow-inner">1.000000001x</span>
+</div>
+</div>
+<!-- Kinematic Readouts -->
+<div class="recessed-panel rounded p-3 flex flex-col gap-2">
+<h3 class="font-section-heading text-on-surface uppercase border-b border-outline-variant pb-1 text-center">KINEMATIC READOUTS</h3>
+<div class="flex justify-between items-center bg-surface-container border border-outline-variant px-2 py-1 rounded">
+<span class="font-micro-label text-on-surface-variant">Peak Velocity</span>
+<span class="font-telemetry-readout text-[13px] text-on-surface">2030 km/s</span>
+</div>
+<div class="flex justify-between items-center bg-surface-container border border-outline-variant px-2 py-1 rounded">
+<span class="font-micro-label text-on-surface-variant">Coasting Phase Duration</span>
+<span class="font-telemetry-readout text-[13px] text-primary">120 Hours (5 Days)</span>
+</div>
+<div class="flex justify-between items-center bg-surface-container border border-outline-variant px-2 py-1 rounded">
+<span class="font-micro-label text-on-surface-variant">Acceleration Phase Duration</span>
+<span class="font-telemetry-readout text-[13px] text-primary">48 Hours (2 Days)</span>
+</div>
+<div class="flex justify-between items-center bg-surface-container border border-outline-variant px-2 py-1 rounded">
+<span class="font-micro-label text-on-surface-variant">Deceleration Phase Duration</span>
+<span class="font-telemetry-readout text-[13px] text-primary">48 Hours (2 Days)</span>
+</div>
+<div class="flex flex-col items-center bg-surface-container border border-outline-variant px-2 py-1 rounded text-center">
+<span class="font-micro-label text-on-surface-variant">Deceleration Initiation Timer (Elapsed into Coast)</span>
+<span class="font-telemetry-readout text-[14px] text-secondary mt-1">3 Days, 12:00:00</span>
+</div>
+</div>
+<!-- Power & Logistics Matrix -->
+<div class="recessed-panel rounded p-3 flex flex-col gap-3">
+<h3 class="font-section-heading text-on-surface uppercase border-b border-outline-variant pb-1 text-center">POWER &amp; LOGISTICS MATRIX</h3>
+<div class="flex justify-between items-center">
+<span class="font-telemetry-readout text-[14px] text-on-surface">Energy Bill (E)</span>
+<span class="font-clock-display text-[16px] text-primary bg-surface-container px-3 py-1 border border-outline-variant rounded shadow-inner">1.74 Exajoules</span>
+</div>
+<div class="border border-outline-variant rounded bg-canvas p-2 flex flex-col h-32 relative mt-2">
+<span class="font-micro-label text-on-surface absolute top-2 left-2 z-10">Fuel Tyranny Index</span>
+<div class="flex-1 flex items-end justify-center gap-6 mt-4 pl-8 pb-4 relative">
+<!-- Y-Axis -->
+<div class="absolute left-2 top-0 bottom-4 flex flex-col justify-between items-end text-[8px] font-micro-label text-on-surface-variant border-r border-outline-variant pr-1 w-8">
+<span class="">2000 -</span>
+<span class="">1500 -</span>
+<span class="">1000 -</span>
+<span class="">500 -</span>
+<span class="">0 -</span>
+</div>
+<div class="absolute left-2 top-4 bottom-4 flex flex-col justify-between items-end text-[8px] font-micro-label text-on-surface-variant -rotate-90 origin-bottom-left w-full translate-y-full -translate-x-4">
+<span class="">Fuel Mass</span>
+</div>
+<!-- X-Axis line -->
+<div class="absolute left-10 right-2 bottom-4 border-t border-outline-variant"></div>
+<!-- Bars -->
+<div class="w-12 bg-error h-[80%] relative flex justify-center z-10 shadow-[0_0_10px_rgba(239,68,68,0.3)]">
+<span class="absolute -bottom-4 text-[9px] font-micro-label text-on-surface whitespace-nowrap">Fuel Mass</span>
+</div>
+<div class="w-12 bg-surface-container-highest border border-outline h-[20%] relative flex justify-center z-10">
+<span class="absolute -bottom-4 text-[9px] font-micro-label text-on-surface whitespace-nowrap">Payload Mass</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<script>
+        // System Clock Simulation (Doesn't need to be perfectly accurate for static design)
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getUTCHours()).padStart(2, '0');
+            const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+            const ms = String(now.getUTCMilliseconds()).padStart(3, '0');
+            const dateStr = "2030-11-07"; // Static date to match mockups
+            
+            document.getElementById('sys-clock').textContent = `${dateStr} ${hours}:${minutes}:${seconds}.${ms} UTC`;
+        }
+        setInterval(updateClock, 100);
+        updateClock();
+
+        // Radio button logic for visual interaction
+        document.querySelectorAll('.custom-radio').forEach(radio => {
+            radio.parentElement.addEventListener('click', function(e) {
+                // Find group container
+                let container = this.closest('.flex-col') || this.closest('.flex');
+                if(!container) return;
+                
+                // Remove active from peers
+                container.querySelectorAll('.custom-radio').forEach(r => {
+                    r.classList.remove('active', 'border-secondary');
+                    // Reset text colors
+                    let textSpan = r.nextElementSibling;
+                    if(textSpan) {
+                        textSpan.classList.remove('text-secondary');
+                        textSpan.classList.add('text-on-surface-variant');
+                    }
+                });
+
+                // Set active to clicked
+                let clickedRadio = this.querySelector('.custom-radio');
+                clickedRadio.classList.add('active', 'border-secondary');
+                let clickedText = this.querySelector('span');
+                if(clickedText) {
+                    clickedText.classList.remove('text-on-surface-variant');
+                    clickedText.classList.add('text-secondary');
+                }
+            });
+        });
+    </script>
+</body></html>
