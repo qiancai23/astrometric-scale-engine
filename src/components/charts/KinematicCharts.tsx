@@ -54,7 +54,7 @@ const generateChartData = (
   const points: { t: number; v: number; x: number }[] = [];
   const numPoints = 200; // higher resolution
   
-  if (distance <= 0) return points;
+  if (distance <= 0) return { points, tAccel: 0 };
 
   const c = SPEED_OF_LIGHT;
 
@@ -70,6 +70,7 @@ const generateChartData = (
         x: t * v
       });
     }
+    return { points, tAccel: 0 };
   } else {
     // Sublight
     const a = accelG * GRAVITY;
@@ -94,8 +95,16 @@ const generateChartData = (
     
     const totalTime = 2 * tAccel + tCoast;
     
+    const timePoints = new Set<number>();
     for (let i = 0; i <= numPoints; i++) {
-      const t = (i / numPoints) * totalTime;
+      timePoints.add((i / numPoints) * totalTime);
+    }
+    timePoints.add(tAccel);
+    if (tCoast > 0) timePoints.add(tAccel + tCoast);
+    
+    const sortedT = Array.from(timePoints).sort((a, b) => a - b);
+    
+    for (const t of sortedT) {
       let v = 0;
       let x = 0;
       
@@ -107,15 +116,15 @@ const generateChartData = (
         const coastT = t - tAccel;
         x = accelDist + vCap * coastT;
       } else {
-        const decelT = totalTime - t;
+        const decelT = Math.max(0, totalTime - t); // clamp to 0
         v = (c * a * decelT) / Math.sqrt(c * c + a * a * decelT * decelT);
         const decelX = (c * c / a) * (Math.sqrt(1 + Math.pow(a * decelT / c, 2)) - 1);
         x = distance - decelX;
       }
       points.push({ t, v, x });
     }
+    return { points, tAccel };
   }
-  return points;
 };
 
 export const KinematicCharts: React.FC = () => {
@@ -137,7 +146,7 @@ export const KinematicCharts: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  const data = useMemo(() => {
+  const { points: data, tAccel } = useMemo(() => {
     return generateChartData(distanceMeters, accelerationG, speedCapC, driveCore, warpFactor);
   }, [distanceMeters, accelerationG, speedCapC, driveCore, warpFactor]);
 
@@ -151,7 +160,7 @@ export const KinematicCharts: React.FC = () => {
 
   const { width, height } = size;
   const paddingX = 70;
-  const paddingY = 25;
+  const paddingY = 35;
   
   const maxT = data[data.length - 1].t || 1;
   const maxV = Math.max(...data.map(d => d.v)) || 1;
@@ -217,8 +226,16 @@ export const KinematicCharts: React.FC = () => {
         <path d={vPath} fill="none" stroke="var(--color-accent-active)" strokeWidth="3" />
         
         {/* Labels */}
+        <text x={width / 2} y={16} fill="var(--color-text-primary, #ffffff)" fontSize="13" textAnchor="middle" className="font-mono" fontWeight="bold">Kinematic Velocity & Trajectory Profile</text>
         <text x={width - paddingX} y={paddingY + 10} fill="var(--color-text-secondary)" fontSize="11" textAnchor="end" className="font-mono">Position (S-Curve)</text>
         <text x={paddingX + 10} y={paddingY + 10} fill="var(--color-accent-active)" fontSize="11" className="font-mono">Velocity Profile</text>
+        
+        {/* Schematic Disclaimer */}
+        {driveCore === 'Sublight' && maxT > 0 && (tAccel / maxT) < 0.01 && (
+          <text x={width / 2} y={height / 2 + 40} fill="var(--color-text-muted)" fontSize="10" textAnchor="middle" className="font-mono">
+            * Acceleration phase is too short to be visible at this timescale.
+          </text>
+        )}
         
         {/* Axes Labels */}
         <text x={width / 2} y={height - 2} fill="var(--color-text-muted)" fontSize="10" textAnchor="middle" className="font-mono">Time</text>

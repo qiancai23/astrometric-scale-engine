@@ -16,6 +16,9 @@ requests.Session.request = new_request
 from astroquery.gaia import Gaia
 from astroquery.jplhorizons import Horizons
 
+import datetime
+import urllib.parse
+
 def create_systemic_data():
     print("Fetching systemic data from JPL Horizons...")
     bodies = {
@@ -29,7 +32,23 @@ def create_systemic_data():
         '699': ('Saturn', 'Planet'),
         '799': ('Uranus', 'Planet'),
         '899': ('Neptune', 'Planet'),
-        '999': ('Pluto', 'Dwarf Planet')
+        '999': ('Pluto', 'Dwarf Planet'),
+        '1;': ('Ceres', 'Dwarf Planet'),
+        '136199;': ('Eris', 'Dwarf Planet'),
+        '136108;': ('Haumea', 'Dwarf Planet'),
+        '136472;': ('Makemake', 'Dwarf Planet'),
+        '90377;': ('Sedna', 'Dwarf Planet'),
+        '50000;': ('Quaoar', 'Dwarf Planet'),
+        '90482;': ('Orcus', 'Dwarf Planet'),
+        '225088;': ('Gonggong', 'Dwarf Planet'),
+        '4;': ('Vesta', 'Asteroid'),
+        '2;': ('Pallas', 'Asteroid'),
+        '3;': ('Juno', 'Asteroid'),
+        '10;': ('Hygiea', 'Asteroid'),
+        '16;': ('Psyche', 'Asteroid'),
+        '433;': ('Eros', 'Asteroid'),
+        '101955;': ('Bennu', 'Asteroid'),
+        '162173;': ('Ryugu', 'Asteroid')
     }
     
     results = []
@@ -42,18 +61,48 @@ def create_systemic_data():
                 "coords": [0.0, 0.0, 0.0]
             })
             continue
+
+        periods = {
+            '199': 0.24, '299': 0.615, '399': 1.0, '301': 0.074, 
+            '499': 1.88, '599': 11.86, '699': 29.46, '799': 84.01, 
+            '899': 164.8, '999': 248.0, '1;': 4.6, '136199;': 558.0, 
+            '136108;': 284.0, '136472;': 306.0, '90377;': 11400.0, 
+            '50000;': 288.0, '90482;': 247.0, '225088;': 554.0, 
+            '4;': 3.63, '2;': 4.62, '3;': 4.36, '10;': 5.56, 
+            '16;': 4.99, '433;': 1.76, '101955;': 1.19, '162173;': 1.30
+        }
             
-        obj = Horizons(id=body_id, location='@sun', epochs=None)
+        period = periods.get(body_id, 1.0)
+        
+        half_period = period / 2.0
+        start_year = max(1900, 2024 - half_period)
+        end_year = min(2190, 2024 + half_period)
+        
+        start_date = datetime.date(int(start_year), 1, 1)
+        end_date = datetime.date(int(end_year), 1, 1)
+        
+        epochs_dict = {
+            'start': start_date.strftime('%Y-%m-%d'),
+            'stop': end_date.strftime('%Y-%m-%d'),
+            'step': '100'
+        }
+
+        obj = Horizons(id=body_id, location='@sun', epochs=epochs_dict)
         vec = obj.vectors()
         x = float(vec['x'][0])
         y = float(vec['y'][0])
         z = float(vec['z'][0])
         
+        orbit_path = []
+        for i in range(len(vec)):
+            orbit_path.append([float(vec['x'][i]), float(vec['y'][i]), float(vec['z'][i])])
+
         results.append({
             "id": body_id,
             "name": name,
             "type": btype,
-            "coords": [x, y, z]
+            "coords": [x, y, z],
+            "orbit_path": orbit_path
         })
         
     os.makedirs('scripts', exist_ok=True)
@@ -79,7 +128,11 @@ def create_stars_data():
         
         # Anomalies
         {'name': 'Sagittarius A*', 'origin': 'Static Astrometric Anchors', 'type': 'Black Hole', 'ra': 266.416, 'dec': -29.007, 'dist': 8178.0, 'constellation': 'Sagittarius', 'mag': 0.0, 'narrative': 'The supermassive black hole at the galactic center of the Milky Way.'},
-        {'name': 'Voyager 1', 'origin': 'Static Astrometric Anchors', 'type': 'Spacecraft', 'ra': 258.21, 'dec': 12.35, 'dist': 0.00078, 'constellation': 'Ophiuchus', 'mag': 0.0, 'narrative': 'The most distant human-made object, currently coasting through interstellar space.'}
+        {'name': 'Voyager 1', 'origin': 'Static Astrometric Anchors', 'type': 'Spacecraft', 'ra': 258.21, 'dec': 12.35, 'dist': 0.00078, 'constellation': 'Ophiuchus', 'mag': 0.0, 'narrative': 'The most distant human-made object, currently coasting through interstellar space.'},
+        {'name': 'Voyager 2', 'origin': 'Static Astrometric Anchors', 'type': 'Spacecraft', 'ra': 304.29, 'dec': -59.5, 'dist': 0.00069, 'constellation': 'Pavo', 'mag': 0.0, 'narrative': 'The only spacecraft to have visited Uranus and Neptune.'},
+        {'name': 'New Horizons', 'origin': 'Static Astrometric Anchors', 'type': 'Spacecraft', 'ra': 290.75, 'dec': -20.03, 'dist': 0.00031, 'constellation': 'Sagittarius', 'mag': 0.0, 'narrative': 'The first spacecraft to explore Pluto and the Kuiper belt.'},
+        {'name': 'Pioneer 10', 'origin': 'Static Astrometric Anchors', 'type': 'Spacecraft', 'ra': 79.35, 'dec': 26.05, 'dist': 0.00069, 'constellation': 'Taurus', 'mag': 0.0, 'narrative': 'The first spacecraft to travel through the asteroid belt and visit Jupiter.'},
+        {'name': 'Pioneer 11', 'origin': 'Static Astrometric Anchors', 'type': 'Spacecraft', 'ra': 285.0, 'dec': -8.68, 'dist': 0.00056, 'constellation': 'Aquila', 'mag': 0.0, 'narrative': 'The first probe to encounter Saturn.'}
     ]
 
     results = []
@@ -158,6 +211,52 @@ def create_stars_data():
                 "scale_narrative": t.get('narrative')
             }
         })
+
+    print("Downloading Exoplanets from NASA Archive...")
+    query = "select pl_name, ra, dec, sy_dist, pl_bmasse from pscomppars where sy_dist < 100 and sy_dist IS NOT NULL"
+    url = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=" + urllib.parse.quote(query) + "&format=json"
+    
+    try:
+        response = urllib.request.urlopen(url)
+        data = json.loads(response.read().decode('utf-8'))
+        
+        exoplanets = []
+        for idx, row in enumerate(data):
+            name = row.get('pl_name', f'Exoplanet {idx}')
+            # Avoid duplicating ones already manually defined
+            if name in ['Gliese 12 b', 'TRAPPIST-1 e']: continue
+            
+            ra = row.get('ra', 0.0)
+            dec = row.get('dec', 0.0)
+            d = row.get('sy_dist', 10.0)
+            
+            ra_rad = math.radians(ra)
+            dec_rad = math.radians(dec)
+            
+            x = d * math.cos(dec_rad) * math.cos(ra_rad)
+            y = d * math.cos(dec_rad) * math.sin(ra_rad)
+            z = d * math.sin(dec_rad)
+            
+            mass = row.get('pl_bmasse')
+            mass_str = f"{mass:.1f} Earth masses" if mass else "Unknown mass"
+            
+            exoplanets.append({
+                "id": f"nasa_exo_{idx}",
+                "name": name,
+                "catalog_origin": "NASA Exoplanet Archive",
+                "type": "Exoplanet",
+                "coords": [x, y, z],
+                "display_metrics": {
+                    "constellation": None,
+                    "apparent_magnitude": None,
+                    "true_distance_ly": round(d * 3.26156, 2),
+                    "scale_narrative": mass_str
+                }
+            })
+        print(f"Parsed {len(exoplanets)} exoplanets from NASA TAP.")
+        results.extend(exoplanets)
+    except Exception as e:
+        print("Failed to download exoplanets:", e)
 
     with open('scripts/stars.json', 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2)

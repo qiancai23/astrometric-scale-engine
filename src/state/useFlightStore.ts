@@ -8,6 +8,7 @@ export interface AstroObject {
   type?: string;
   mag?: number;
   coords: [number, number, number];
+  orbit_path?: [number, number, number][];
   display_metrics?: {
     constellation?: string | null;
     apparent_magnitude?: number;
@@ -20,6 +21,7 @@ export type DriveCore = 'Sublight' | 'Warp';
 export type AstrometricRegime = 'Systemic' | 'Interstellar';
 
 export const PARSEC_TO_METERS = 3.085677581e16;
+export const LIGHTYEAR_TO_METERS = 9.4607304725808e15;
 export const AU_TO_METERS = 1.495978707e11;
 export const GRAVITY = 9.80665;
 

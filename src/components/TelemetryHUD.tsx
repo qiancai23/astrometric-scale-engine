@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFlightStore, AU_TO_METERS, PARSEC_TO_METERS } from '../state/useFlightStore';
+import { useFlightStore, AU_TO_METERS, PARSEC_TO_METERS, LIGHTYEAR_TO_METERS } from '../state/useFlightStore';
 
 const formatDuration = (seconds: number) => {
   if (!seconds || isNaN(seconds)) return '0.00 s';
@@ -18,12 +18,15 @@ const formatDuration = (seconds: number) => {
 
 const formatDistance = (meters: number) => {
   if (!meters || isNaN(meters)) return '0.00 km';
-  if (meters >= PARSEC_TO_METERS * 0.1) {
+  
+  if (meters >= PARSEC_TO_METERS * 100) {
     return `${(meters / PARSEC_TO_METERS).toFixed(4)} pc`;
-  } else if (meters >= AU_TO_METERS * 0.1) {
+  } else if (meters >= LIGHTYEAR_TO_METERS * 0.1) {
+    return `${(meters / LIGHTYEAR_TO_METERS).toFixed(4)} ly`;
+  } else if (meters >= AU_TO_METERS * 0.01) {
     return `${(meters / AU_TO_METERS).toFixed(4)} AU`;
   } else {
-    return `${(meters / 1000).toFixed(0)} km`;
+    return `${(meters / 1000).toLocaleString(undefined, {maximumFractionDigits: 0})} km`;
   }
 };
 
@@ -85,6 +88,32 @@ export const TelemetryHUD: React.FC = () => {
           <div className="telemetry-row">
             <span className="text-muted">Energy</span>
             <span className="telemetry-value">{result?.energyExajoules?.toExponential(4) || '0.0000e+0'} EJ</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="config-section">
+        <h3>Camera Controls</h3>
+        <div className="telemetry-block font-mono" style={{ fontSize: '11px' }}>
+          <div className="telemetry-row">
+            <span className="text-muted">Rotate</span>
+            <span className="text-secondary">Left Click + Drag</span>
+          </div>
+          <div className="telemetry-row">
+            <span className="text-muted">Pan</span>
+            <span className="text-secondary">Right Click + Drag</span>
+          </div>
+          <div className="telemetry-row">
+            <span className="text-muted">Zoom</span>
+            <span className="text-secondary">Scroll Wheel</span>
+          </div>
+          <div className="telemetry-row">
+            <span className="text-muted">Center</span>
+            <span className="text-secondary">Double-Click Obj</span>
+          </div>
+          <div className="telemetry-row">
+            <span className="text-muted">Reset</span>
+            <span className="text-secondary">Esc / Click Space</span>
           </div>
         </div>
       </div>
