@@ -3,5 +3,4 @@ dist/
 build/
 .env
 .DS_Store
-# scripts/*.json
 *.log
