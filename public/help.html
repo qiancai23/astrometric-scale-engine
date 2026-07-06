@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astrometric Scale Engine – User Guide</title>
+  <meta name="description" content="User guide for the Astrometric Scale Engine: an interactive relativistic spaceflight calculator and 3D star map." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:         #080c14;
+      --bg-card:    #0e1521;
+      --bg-aside:   #0b1119;
+      --border:     #1e2d45;
+      --accent:     #00d4ff;
+      --accent-dim: #0096b5;
+      --amber:      #ffb347;
+      --muted:      #4a6580;
+      --text:       #c8d8e8;
+      --text-bright:#e8f4ff;
+      --radius:     8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────── */
+    nav#sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: 240px;
+      min-width: 240px;
+      background: var(--bg-aside);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 32px 0 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-logo {
+      padding: 0 20px 24px;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .nav-logo span {
+      display: block;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0;
+      text-transform: none;
+      margin-bottom: 2px;
+    }
+
+    nav#sidebar a {
+      display: block;
+      padding: 7px 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    nav#sidebar a:hover,
+    nav#sidebar a.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: rgba(0, 212, 255, 0.05);
+    }
+
+    .nav-group-label {
+      padding: 16px 20px 4px;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Main ────────────────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 56px 64px 80px;
+      max-width: 860px;
+    }
+
+    /* ── Typography ──────────────────────────────────────── */
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    h1 .subtitle {
+      display: block;
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0;
+      margin-top: 6px;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin: 56px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 32px;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 28px 0 10px;
+      scroll-margin-top: 32px;
+    }
+
+    p { margin-bottom: 14px; }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    strong { color: var(--text-bright); font-weight: 500; }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85em;
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--accent);
+    }
+
+    /* ── Cards ───────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 6px;
+    }
+
+    .card p { margin-bottom: 0; }
+
+    /* ── Two-col grid ────────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Tier table ──────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 0.88rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 9px 12px;
+      background: rgba(0, 212, 255, 0.06);
+      color: var(--accent);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.82em; color: var(--accent); }
+
+    /* ── Callout boxes ───────────────────────────────────── */
+    .callout {
+      display: flex;
+      gap: 14px;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin: 20px 0;
+      border-left: 3px solid;
+    }
+
+    .callout-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+    .callout-body { flex: 1; }
+    .callout-body p { margin-bottom: 0; font-size: 0.9rem; }
+
+    .callout.info    { background: rgba(0,212,255,0.06); border-color: var(--accent); }
+    .callout.warning { background: rgba(255,179,71,0.07); border-color: var(--amber); }
+
+    /* ── Kbd ─────────────────────────────────────────────── */
+    kbd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em;
+      background: #162032;
+      border: 1px solid var(--border);
+      border-bottom: 2px solid #2a3f5a;
+      border-radius: 4px;
+      padding: 1px 7px;
+      color: var(--text-bright);
+      display: inline-block;
+    }
+
+    /* ── Keyboard shortcut rows ──────────────────────────── */
+    .control-grid {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 8px 16px;
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+    }
+
+    .control-action { color: var(--muted); }
+
+    /* ── Step list ───────────────────────────────────────── */
+    ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
+    ol.steps li {
+      counter-increment: step;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+      align-items: start;
+    }
+    ol.steps li::before {
+      content: counter(step);
+      width: 28px;
+      height: 28px;
+      background: rgba(0,212,255,0.12);
+      border: 1px solid var(--accent-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* ── Divider / hero bar ──────────────────────────────── */
+    .hero-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(90deg, rgba(0,212,255,0.08) 0%, transparent 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 24px;
+      margin: 8px 0 28px;
+    }
+    .hero-bar .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      flex-shrink: 0;
+    }
+    .hero-bar p { margin: 0; font-size: 0.92rem; }
+
+    /* ── Back link ───────────────────────────────────────── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 32px;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 768px) {
+      nav#sidebar { display: none; }
+      main { padding: 32px 24px 60px; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar Navigation ── -->
+<nav id="sidebar">
+  <div class="nav-logo">
+    <span>Astrometric Scale Engine</span>
+    User Guide
+  </div>
+
+  <div class="nav-group-label">Getting Started</div>
+  <a href="#overview">Overview</a>
+  <a href="#quickstart">Quick Start</a>
+  <a href="#layout">Interface Layout</a>
+
+  <div class="nav-group-label">Controls</div>
+  <a href="#regime">Astrometric Regime</a>
+  <a href="#targets">Target Coordinates</a>
+  <a href="#propulsion">Propulsion System</a>
+  <a href="#kinematics">Kinematic Config</a>
+
+  <div class="nav-group-label">Reading Results</div>
+  <a href="#header">Mission Header</a>
+  <a href="#telemetry">Telemetry HUD</a>
+  <a href="#charts">Flight Charts</a>
+  <a href="#viewport">3D Viewport</a>
+
+  <div class="nav-group-label">Concepts</div>
+  <a href="#relativity">Relativistic Travel</a>
+  <a href="#warp">Warp Drive Physics</a>
+  <a href="#catalogs">Data Catalogs</a>
+
+  <div class="nav-group-label">Reference</div>
+  <a href="#glossary">Glossary</a>
+  <a href="#units">Units Reference</a>
+</nav>
+
+<!-- ── Main Content ── -->
+<main>
+  <a class="back-link" href="/">← Return to Dashboard</a>
+
+  <h1>
+    Astrometric Scale Engine
+    <span class="subtitle">Interactive Relativistic Spaceflight Calculator — User Guide</span>
+  </h1>
+
+  <div class="hero-bar">
+    <div class="dot"></div>
+    <p>Configure an origin, destination, and propulsion system to instantly compute relativistic travel times, energy requirements, and mission trajectories across any scale — from our solar system to the edge of the galaxy.</p>
+  </div>
+
+  <!-- ────────────────────────── OVERVIEW ────────────────────────────── -->
+  <h2 id="overview">Overview</h2>
+  <p>The Astrometric Scale Engine is a physics-accurate mission planning tool that solves one fundamental question: <strong>how long does it actually take to get there, and what does it cost?</strong></p>
+  <p>It applies the real equations of special relativity for sublight travel and the Alcubierre flat-metric model for hypothetical warp drive. All durations, velocities, and energies update in real time as you adjust the controls.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">⚡ Sublight Physics</div>
+      <p>True relativistic kinematics — proper time, coordinate time, time dilation, and kinetic energy are calculated from first principles using constant proper acceleration and an optional coasting phase.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🌀 Warp Drive</div>
+      <p>The Alcubierre metric model: the ship's interior remains in flat space-time (Lorentz factor = 1) while the metric itself contracts ahead and expands behind. Superluminal travel is possible but speculative.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🌌 Real Stellar Data</div>
+      <p>The Interstellar catalog sources data from the HYG star database (1,400+ named stars), the NASA Exoplanet Archive (1,500+ confirmed exoplanets), and the Messier catalog of deep-sky objects.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🪐 Solar System</div>
+      <p>The Systemic catalog uses real orbital ephemeris data from JPL Horizons — planets, dwarf planets, asteroids, and active spacecraft at their actual 3D positions in AU.</p>
+    </div>
+  </div>
+
+  <!-- ────────────────────────── QUICKSTART ──────────────────────────── -->
+  <h2 id="quickstart">Quick Start</h2>
+  <ol class="steps">
+    <li>
+      <span></span>
+      <div>Choose an <strong>Astrometric Regime</strong> in the left column — <code>Systemic</code> for travel within our solar system, <code>Interstellar</code> for deep-space journeys.</div>
+    </li>
+    <li>
+      <span></span>
+      <div>Select an <strong>Origin Node</strong> (your departure point) from the dropdown. Use the search box to filter by name or constellation.</div>
+    </li>
+    <li>
+      <span></span>
+      <div>Select a <strong>Destination Node</strong>. The 3D viewport will immediately draw a travel vector between the two points.</div>
+    </li>
+    <li>
+      <span></span>
+      <div>Choose an <strong>Engine Core Tier</strong> from Tier 1 (Chemical Rocket) to Tier 5 (Alcubierre Warp).</div>
+    </li>
+    <li>
+      <span></span>
+      <div>Adjust <strong>Acceleration</strong>, <strong>Velocity Ceiling</strong>, and <strong>Hull Mass</strong> using the sliders. Results update instantly in the header and right-side Telemetry HUD.</div>
+    </li>
+  </ol>
+
+  <!-- ────────────────────────── LAYOUT ──────────────────────────────── -->
+  <h2 id="layout">Interface Layout</h2>
+  <p>The dashboard is a non-scrolling three-column layout:</p>
+  <table>
+    <thead>
+      <tr><th>Region</th><th>Contents</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Global Header (top)</strong></td><td>Mission epoch, Peak Lorentz Factor (γ), and computed arrival timestamps for both Earth-frame and ship-frame observers.</td></tr>
+      <tr><td><strong>Left Column</strong></td><td>Flight Configuration panel — Regime, Origin/Destination selectors, Engine Tier, and all kinematic sliders.</td></tr>
+      <tr><td><strong>Centre Column (upper)</strong></td><td>3D WebGL viewport — an interactive star map of the active catalog with your travel vector rendered.</td></tr>
+      <tr><td><strong>Centre Column (lower)</strong></td><td>2D analytics charts — Velocity vs. Time and Position vs. Time for the current flight profile.</td></tr>
+      <tr><td><strong>Right Column</strong></td><td>Telemetry HUD — chronological delta, kinematic readouts, power/logistics figures, and 3D camera control reference.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ────────────────────────── REGIME ──────────────────────────────── -->
+  <h2 id="regime">Astrometric Regime</h2>
+  <p>The regime selector determines which catalog is active and which unit system is used for distance calculations.</p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🪐 Systemic (Local / AU)</div>
+      <p>Displays solar system bodies — planets, dwarf planets, asteroids, and spacecraft. Coordinates are in <strong>Astronomical Units (AU)</strong>. Recommended for sublight, near-future propulsion tiers.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🌌 Interstellar (Deep Space / PC)</div>
+      <p>Displays the full stellar catalog. Coordinates are in <strong>Parsecs (pc)</strong>. Use for any journey beyond the heliopause. Best combined with Tier 4 (Antimatter) or Tier 5 (Warp).</p>
+    </div>
+  </div>
+
+  <div class="callout warning">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body"><p><strong>Switching regimes clears your Origin and Destination</strong> selections, since the two catalogs use incompatible coordinate systems. You will need to re-select both nodes after switching.</p></div>
+  </div>
+
+  <!-- ────────────────────────── TARGETS ─────────────────────────────── -->
+  <h2 id="targets">Target Coordinates</h2>
+  <h3>Origin Node</h3>
+  <p>Your departure point. Select from the dropdown after optionally filtering by name, constellation, or catalog category. Once selected, a card appears below the dropdown showing the object's distance from Sol and a contextual description.</p>
+
+  <h3>Destination Node</h3>
+  <p>Your arrival point. Works identically to Origin. The engine computes the 3D Euclidean distance between the two coordinate vectors in the active unit system and converts to meters for all physics calculations.</p>
+
+  <h3>Category Filter (Interstellar only)</h3>
+  <p>In Interstellar mode, a category dropdown appears above each selector to narrow the catalog:</p>
+  <table>
+    <thead><tr><th>Category</th><th>Source</th><th>Contents</th></tr></thead>
+    <tbody>
+      <tr><td>HYG Database</td><td>astronexus/HYG-Database v3.6</td><td>Named stars and bright Bayer-designated stars from the Yale Bright Star Catalog and Hipparcos, with spectral class and 3D position in parsecs.</td></tr>
+      <tr><td>NASA Exoplanet Archive</td><td>NASA TAP Service</td><td>Confirmed exoplanets within 100 pc, including mass estimates where available.</td></tr>
+      <tr><td>Messier Catalog</td><td>Static astrometric data</td><td>Deep-sky objects: nebulae, galaxies, and clusters with descriptive narratives.</td></tr>
+      <tr><td>Static Astrometric Anchors</td><td>Curated</td><td>Notable waypoints: Sagittarius A*, Voyager 1 &amp; 2, New Horizons, Pioneer 10 &amp; 11.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ────────────────────────── PROPULSION ──────────────────────────── -->
+  <h2 id="propulsion">Propulsion System</h2>
+  <p>Select an Engine Core Tier to set the physical limits of your drive. Each tier enforces a maximum acceleration and a velocity ceiling for sublight drives.</p>
+
+  <table>
+    <thead>
+      <tr><th>Tier</th><th>Drive Type</th><th>Max Accel.</th><th>Velocity Ceiling</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">1</td>
+        <td><strong>Chemical Rocket</strong></td>
+        <td class="mono">3.0 G</td>
+        <td class="mono">0.0001 c (~108,000 km/h)</td>
+        <td>Present-day technology. Practical only for short systemic hops.</td>
+      </tr>
+      <tr>
+        <td class="mono">2</td>
+        <td><strong>Ion / Plasma Core</strong></td>
+        <td class="mono">0.1 G</td>
+        <td class="mono">0.01 c (~10.7M km/h)</td>
+        <td>Low thrust, very high specific impulse. Long-burn efficiency. Good for asteroid belt travel.</td>
+      </tr>
+      <tr>
+        <td class="mono">3</td>
+        <td><strong>Fusion Tokamak</strong></td>
+        <td class="mono">1.0 G</td>
+        <td class="mono">0.20 c (~215M km/h)</td>
+        <td>Near-future. 1G acceleration is comfortable for crew. Relativistic effects become notable.</td>
+      </tr>
+      <tr>
+        <td class="mono">4</td>
+        <td><strong>Antimatter Rocket</strong></td>
+        <td class="mono">3.0 G</td>
+        <td class="mono">0.99 c</td>
+        <td>Strong time dilation. Ship time diverges significantly from Earth time. Practical for nearby stars.</td>
+      </tr>
+      <tr>
+        <td class="mono">5</td>
+        <td><strong>Alcubierre Warp</strong></td>
+        <td class="mono">N/A</td>
+        <td class="mono">Superluminal (×c)</td>
+        <td>Hypothetical metric distortion. No onboard acceleration. Warp Factor = multiples of <em>c</em>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ────────────────────────── KINEMATICS ──────────────────────────── -->
+  <h2 id="kinematics">Kinematic Configuration</h2>
+  <h3>Acceleration Profile (Sublight only)</h3>
+  <p>Sets the constant proper acceleration in multiples of Earth's surface gravity (<strong>G = 9.80665 m/s²</strong>). A value of <code>1.0 G</code> is comfortable for human passengers and is the baseline used in most hard sci-fi references. The slider range is clamped to the selected engine tier's maximum.</p>
+
+  <h3>Velocity Ceiling (Sublight only)</h3>
+  <p>The maximum speed the ship is permitted to reach, expressed as a fraction of the speed of light (<strong>c</strong>). For low-tier engines where the absolute speed is small, the display switches automatically to km/h for readability.</p>
+
+  <div class="callout info">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body"><p><strong>Coasting Phase:</strong> If the ship reaches its velocity ceiling before the halfway point of the journey, it enters a constant-velocity coast phase. The engine then decelerates symmetrically for the second half. You can see this "trapezoidal" profile in the Velocity vs. Time chart.</p></div>
+  </div>
+
+  <h3>Warp Factor (Warp only)</h3>
+  <p>Sets the superluminal speed as a direct multiple of <em>c</em>. A Warp Factor of <code>10</code> means the ship traverses 10 light-years per year of coordinate time. Range is <code>1×</code> to <code>50×</code>.</p>
+
+  <h3>Hull Structural Mass</h3>
+  <p>The dry mass of the ship in metric tonnes (fuel and payload excluded). This affects the energy calculation. The slider is logarithmic — small adjustments near the low end have a large relative effect. A ship classification label is shown based on the mass:</p>
+  <table>
+    <thead><tr><th>Class</th><th>Mass Range</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Scout</strong></td><td>≤ 75 t</td></tr>
+      <tr><td><strong>Corvette</strong></td><td>76 – 5,000 t</td></tr>
+      <tr><td><strong>Frigate</strong></td><td>5,001 – 10,000 t</td></tr>
+      <tr><td><strong>Cruiser</strong></td><td>10,001 – 100,000 t</td></tr>
+      <tr><td><strong>Carrier</strong></td><td>100,001 – 1,000,000 t</td></tr>
+      <tr><td><strong>Battleship</strong></td><td>1,000,001 – 5,000,000 t</td></tr>
+      <tr><td><strong>Dreadnought</strong></td><td>5,000,001 – 10,000,000 t</td></tr>
+      <tr><td><strong>Generation Ship</strong></td><td>&gt; 10,000,000 t</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ────────────────────────── HEADER ──────────────────────────────── -->
+  <h2 id="header">Mission Header</h2>
+  <p>The header bar at the top of the dashboard provides a mission snapshot:</p>
+  <table>
+    <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Departure (Origin)</strong></td><td>The fixed mission epoch — <code>2026-05-23 00:00:00 UTC</code>. All arrival times are calculated relative to this date.</td></tr>
+      <tr><td><strong>Peak Lorentz Factor (γ)</strong></td><td>The maximum time-dilation multiplier reached during the journey. At 1G acceleration, γ increases gradually. Near <em>c</em>, γ can exceed 7, meaning one year of ship time equals 7+ Earth years. For warp drive, γ is always <code>1.0</code> (no time dilation inside the bubble).</td></tr>
+      <tr><td><strong>Arrival (Earth Time)</strong></td><td>When an observer on Earth would calculate the ship arrives. Uses coordinate (external observer) time.</td></tr>
+      <tr><td><strong>Arrival (Ship Time)</strong></td><td>When the crew aboard the ship experiences arrival. Uses proper time. Will be earlier than Earth Time at relativistic speeds.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ────────────────────────── TELEMETRY ───────────────────────────── -->
+  <h2 id="telemetry">Telemetry HUD</h2>
+  <p>The right column displays the live computed output for the current mission profile.</p>
+  <table>
+    <thead><tr><th>Section</th><th>Fields</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Chronological Delta</strong></td>
+        <td><strong>Earth Time</strong> — total coordinate time from departure to arrival.<br/><strong>Ship Time</strong> — total proper time experienced by the crew.</td>
+      </tr>
+      <tr>
+        <td><strong>Kinematic Readouts</strong></td>
+        <td><strong>Distance</strong> — formatted automatically in km, AU, ly, or pc.<br/><strong>Peak Vel.</strong> — peak velocity in km/s or as a fraction of c.</td>
+      </tr>
+      <tr>
+        <td><strong>Power &amp; Logistics</strong></td>
+        <td><strong>Hull Mass</strong> — current ship mass in metric tonnes.<br/><strong>Energy</strong> — total propulsive energy in Exajoules (EJ). For sublight, this is the relativistic kinetic energy of the acceleration phase. For warp, it represents speculative reactor upkeep over the flight duration.</td>
+      </tr>
+      <tr>
+        <td><strong>Camera Controls</strong></td>
+        <td>Quick reference for 3D viewport interaction (see below).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ────────────────────────── CHARTS ──────────────────────────────── -->
+  <h2 id="charts">Flight Charts</h2>
+  <p>Two SVG charts are rendered in the lower centre column and update in real time:</p>
+  <h3>Velocity vs. Time</h3>
+  <p>Plots the ship's speed (as a fraction of <em>c</em>) over coordinate time. For <strong>sublight flights</strong>, this shows the triangular (flip-and-decelerate) or trapezoidal (with coasting phase) profile. For <strong>warp flights</strong>, the chart shows an instantaneous jump to the warp velocity and a flat line for the duration of travel.</p>
+
+  <h3>Position vs. Time</h3>
+  <p>Plots distance covered (in the active unit system) over coordinate time. For sublight, the curve is concave (slow at start, fast at peak) and symmetric. For warp, it's a straight diagonal line reflecting constant apparent velocity.</p>
+
+  <!-- ────────────────────────── VIEWPORT ────────────────────────────── -->
+  <h2 id="viewport">3D Viewport</h2>
+  <p>The centre column hosts an interactive WebGL star map rendered by Three.js. All objects in the active catalog are projected as a 3D point cloud.</p>
+  <h3>Visual Elements</h3>
+  <ul style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:8px;"><strong>Point cloud</strong> — all catalog bodies, coloured by type.</li>
+    <li style="margin-bottom:8px;"><strong>Origin sphere</strong> — the selected departure node, labelled.</li>
+    <li style="margin-bottom:8px;"><strong>Destination sphere</strong> — the selected arrival node, labelled.</li>
+    <li style="margin-bottom:8px;"><strong>Travel vector</strong> — a coloured line connecting Origin to Destination. Cyan for sublight; amber for warp.</li>
+    <li style="margin-bottom:8px;"><strong>Midpoint &amp; Deceleration markers</strong> — shown on sublight flights with a coasting phase, indicating the flip point and where deceleration begins.</li>
+    <li style="margin-bottom:8px;"><strong>Skybox</strong> — a Milky Way equirectangular panorama. Dimmed in Systemic mode for planet visibility; full intensity in Interstellar mode.</li>
+  </ul>
+  <h3>Camera Controls</h3>
+  <div class="control-grid">
+    <div><kbd>Left Click</kbd> + Drag</div><div class="control-action">Orbit / Rotate the view</div>
+    <div><kbd>Right Click</kbd> + Drag</div><div class="control-action">Pan the camera</div>
+    <div>Scroll Wheel</div><div class="control-action">Zoom in / out</div>
+    <div><kbd>Double-Click</kbd> object</div><div class="control-action">Centre the view on that object</div>
+    <div><kbd>Esc</kbd> / Click empty space</div><div class="control-action">Reset the camera to default position</div>
+  </div>
+
+  <!-- ────────────────────────── RELATIVITY ──────────────────────────── -->
+  <h2 id="relativity">Relativistic Travel Explained</h2>
+  <p>At high velocities, time passes <em>more slowly</em> for a moving observer than for a stationary one. This effect — <strong>time dilation</strong> — is given by the Lorentz factor:</p>
+  <div class="card" style="font-family:'JetBrains Mono',monospace; font-size:0.92rem; letter-spacing:0.02em; margin-bottom:20px;">
+    γ = 1 / √(1 − v²/c²)
+  </div>
+  <p>The engine uses the constant-proper-acceleration equations of special relativity. "Proper acceleration" means the acceleration felt by the crew (what a scale would measure onboard). For an acceleration of <code>a</code> over coordinate distance <code>x</code>:</p>
+  <ul style="padding-left:20px; margin-bottom:14px;">
+    <li style="margin-bottom:6px;"><strong>Coordinate time</strong> (Earth observer): <code>t = (c/a) × √( (1 + ax/c²)² − 1 )</code></li>
+    <li style="margin-bottom:6px;"><strong>Proper time</strong> (ship crew): <code>τ = (c/a) × acosh(1 + ax/c²)</code></li>
+  </ul>
+  <div class="callout info">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body">
+      <p><strong>Example:</strong> At a continuous 1G acceleration, a trip to Proxima Centauri (4.24 ly) takes about <strong>3.5 years</strong> of ship time but <strong>5.9 years</strong> of Earth time. The crew ages less than the people they left behind.</p>
+    </div>
+  </div>
+  <p>At very high Lorentz factors (e.g., Antimatter tier, 0.99c), γ ≈ 7. A 50-year Earth journey takes only ~7 ship years. The crew would return to an Earth 50 years older, having aged only 7 years.</p>
+
+  <!-- ────────────────────────── WARP ─────────────────────────────────── -->
+  <h2 id="warp">Warp Drive Physics</h2>
+  <p>The Alcubierre warp metric (1994) is a theoretical solution to the Einstein field equations. The ship does not move through space — instead, the metric (the fabric of spacetime) contracts ahead of the ship and expands behind it. Within the warp bubble, the interior remains flat Minkowski spacetime:</p>
+  <ul style="padding-left:20px; margin-bottom:14px;">
+    <li style="margin-bottom:6px;"><strong>No onboard acceleration</strong> — the crew experience weightlessness.</li>
+    <li style="margin-bottom:6px;"><strong>Lorentz factor = 1</strong> — there is no time dilation. Ship time equals coordinate time.</li>
+    <li style="margin-bottom:6px;"><strong>Apparent velocity</strong> is a direct multiple of <em>c</em> (Warp Factor × c).</li>
+  </ul>
+  <div class="callout warning">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body"><p>The energy model for warp in this simulator is <strong>speculative</strong>. The real Alcubierre metric would require exotic matter with negative energy density. The Exajoule output shown is an arbitrary reactor-upkeep model and is not physically derived.</p></div>
+  </div>
+
+  <!-- ────────────────────────── CATALOGS ────────────────────────────── -->
+  <h2 id="catalogs">Data Catalogs</h2>
+  <h3>Systemic Catalog</h3>
+  <p>Generated from the <strong>JPL Horizons</strong> ephemeris service. Each body has its actual 3D Cartesian position (in AU, centred on Sol) sampled across a range spanning its orbital period. The orbit path is stored as a sequence of positions for 3D rendering. Included bodies: Sol, 8 planets, Moon, 5 dwarf planets, and 8 asteroids.</p>
+
+  <h3>Interstellar Catalog</h3>
+  <p>A merged dataset from three sources:</p>
+  <ol style="padding-left:20px; margin-bottom:14px;">
+    <li style="margin-bottom:6px;"><strong>HYG Database v3.6</strong> — over 119,000 stars from the Henry Draper, Yale, and Hipparcos catalogs, filtered to those with proper names or Bayer designations bright enough to be of interest (mag &lt; 5.0 or proper-named). 3D positions in parsecs relative to Sol.</li>
+    <li style="margin-bottom:6px;"><strong>NASA Exoplanet Archive</strong> — confirmed exoplanets within 100 parsecs, retrieved via the TAP SQL service. Includes mass estimates where known.</li>
+    <li style="margin-bottom:6px;"><strong>Curated anchors</strong> — Messier objects and notable spacecraft waypoints with hand-written narratives.</li>
+  </ol>
+
+  <!-- ────────────────────────── GLOSSARY ────────────────────────────── -->
+  <h2 id="glossary">Glossary</h2>
+  <table>
+    <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Proper Time (τ)</strong></td><td>Time as experienced by the traveller aboard the ship. Always ≤ coordinate time at relativistic speeds.</td></tr>
+      <tr><td><strong>Coordinate Time (t)</strong></td><td>Time measured by a stationary observer (e.g., on Earth). The "clock on the wall" perspective.</td></tr>
+      <tr><td><strong>Lorentz Factor (γ)</strong></td><td>The ratio of coordinate time to proper time. At 0.99c, γ ≈ 7.09. At 0.9999c, γ ≈ 70.7.</td></tr>
+      <tr><td><strong>Proper Acceleration</strong></td><td>The acceleration felt inside the ship (what a scale measures). Distinct from coordinate acceleration at relativistic speeds.</td></tr>
+      <tr><td><strong>Flip-and-Decelerate</strong></td><td>The standard deep-space manoeuvre: accelerate for the first half of the journey, flip 180°, decelerate for the second half, arriving with near-zero velocity.</td></tr>
+      <tr><td><strong>Coasting Phase</strong></td><td>When the ship reaches its velocity ceiling before the halfway point, it coasts at constant speed until it must begin decelerating.</td></tr>
+      <tr><td><strong>Alcubierre Metric</strong></td><td>A solution to the Einstein field equations describing a "warp bubble" that permits apparent faster-than-light travel without local violations of relativity.</td></tr>
+      <tr><td><strong>AU</strong></td><td>Astronomical Unit. The average Earth–Sun distance. 1 AU ≈ 149.6 million km.</td></tr>
+      <tr><td><strong>Parsec (pc)</strong></td><td>1 parsec = 3.26 light-years = 3.086 × 10¹⁶ metres. Standard unit of stellar distance.</td></tr>
+      <tr><td><strong>Light-year (ly)</strong></td><td>The distance light travels in one year ≈ 9.461 × 10¹⁵ metres.</td></tr>
+      <tr><td><strong>Exajoule (EJ)</strong></td><td>10¹⁸ joules. For reference: the entire world's annual energy consumption is approximately 580 EJ.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ────────────────────────── UNITS ───────────────────────────────── -->
+  <h2 id="units">Units Reference</h2>
+  <table>
+    <thead><tr><th>Quantity</th><th>Unit Displayed</th><th>SI Equivalent</th></tr></thead>
+    <tbody>
+      <tr><td>Distance (small)</td><td>km</td><td>10³ m</td></tr>
+      <tr><td>Distance (systemic)</td><td>AU</td><td>1.496 × 10¹¹ m</td></tr>
+      <tr><td>Distance (interstellar)</td><td>ly / pc</td><td>9.461 × 10¹⁵ m / 3.086 × 10¹⁶ m</td></tr>
+      <tr><td>Velocity (low)</td><td>km/s</td><td>10³ m/s</td></tr>
+      <tr><td>Velocity (relativistic)</td><td>fraction of c</td><td>c = 299,792,458 m/s</td></tr>
+      <tr><td>Acceleration</td><td>G</td><td>9.80665 m/s²</td></tr>
+      <tr><td>Mass</td><td>tonnes</td><td>10³ kg</td></tr>
+      <tr><td>Energy</td><td>EJ (Exajoules)</td><td>10¹⁸ J</td></tr>
+      <tr><td>Time</td><td>y / d / h / m / s</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+</main>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('h2[id], h3[id]');
+  const links = document.querySelectorAll('nav#sidebar a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`nav#sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -75% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

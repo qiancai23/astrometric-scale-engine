@@ -48,15 +48,42 @@ export const GlobalHeader: React.FC = () => {
         <div className="status-gauge">{lorentz.toFixed(8)}</div>
       </div>
       
-      <div className="header-block header-block-right" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '350px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px' }}>
-          <div className="header-label" style={{ margin: 0 }}>Arrival (Earth Time):</div>
-          <div className="header-value font-mono text-muted" style={{ fontSize: '0.9rem' }}>{formatDate(coordinateArrival)}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div className="header-block header-block-right" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '350px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px' }}>
+            <div className="header-label" style={{ margin: 0 }}>Arrival (Earth Time):</div>
+            <div className="header-value font-mono text-muted" style={{ fontSize: '0.9rem' }}>{formatDate(coordinateArrival)}</div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px' }}>
+            <div className="header-label" style={{ margin: 0 }}>Arrival (Ship Time):</div>
+            <div className="header-value font-mono text-accent" style={{ fontSize: '0.9rem' }}>{formatDate(properArrival)}</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '16px' }}>
-          <div className="header-label" style={{ margin: 0 }}>Arrival (Ship Time):</div>
-          <div className="header-value font-mono text-accent" style={{ fontSize: '0.9rem' }}>{formatDate(properArrival)}</div>
-        </div>
+        <a
+          href="/help.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open User Guide"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            color: 'var(--color-text-muted)', textDecoration: 'none',
+            fontSize: '0.8rem', fontWeight: 500,
+            border: '1px solid var(--color-border)',
+            borderRadius: '6px', padding: '5px 10px',
+            transition: 'color 0.15s, border-color 0.15s',
+            whiteSpace: 'nowrap', flexShrink: 0,
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-accent-active)';
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-accent-active)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-muted)';
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-border)';
+          }}
+        >
+          <span style={{ fontSize: '0.9rem' }}>?</span> Help
+        </a>
       </div>
     </div>
   );
