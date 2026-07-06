@@ -262,6 +262,7 @@
       margin-bottom: 14px;
       align-items: start;
     }
+    ol.steps li > div { min-width: 0; }
     ol.steps li::before {
       content: counter(step);
       width: 28px;
@@ -396,23 +397,18 @@
   <h2 id="quickstart">Quick Start</h2>
   <ol class="steps">
     <li>
-      <span></span>
       <div>Choose an <strong>Astrometric Regime</strong> in the left column — <code>Systemic</code> for travel within our solar system, <code>Interstellar</code> for deep-space journeys.</div>
     </li>
     <li>
-      <span></span>
       <div>Select an <strong>Origin Node</strong> (your departure point) from the dropdown. Use the search box to filter by name or constellation.</div>
     </li>
     <li>
-      <span></span>
       <div>Select a <strong>Destination Node</strong>. The 3D viewport will immediately draw a travel vector between the two points.</div>
     </li>
     <li>
-      <span></span>
       <div>Choose an <strong>Engine Core Tier</strong> from Tier 1 (Chemical Rocket) to Tier 5 (Alcubierre Warp).</div>
     </li>
     <li>
-      <span></span>
       <div>Adjust <strong>Acceleration</strong>, <strong>Velocity Ceiling</strong>, and <strong>Hull Mass</strong> using the sliders. Results update instantly in the header and right-side Telemetry HUD.</div>
     </li>
   </ol>
