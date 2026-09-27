@@ -1,3 +1,24 @@
+# Execution Log: Skydome Integration (Runs 1-3)
+
+**Date:** 2026-05-24
+**Completed By:** AI Assistant
+
+## Accomplishments
+* Added the equirectangular panorama of the Milky Way (`milky_way.jpg`) to `public/assets/textures/`. The asset is a highly optimized 4000x2000 JPEG (4.63MB).
+* Created the `<Skydome>` React Three Fiber component in `src/components/visualizer/SceneGraph.tsx` using `@react-three/drei`'s `useTexture` hook. Mapped the texture via `THREE.EquirectangularReflectionMapping` directly to `scene.background`.
+* Avoided physical `<Sphere>` geometries to entirely bypass clipping plane conflicts (`near: 0.0001` vs huge `far`) and prevent depth-buffer Z-fighting.
+* Enclosed the Skydome component in a React `<Suspense>` boundary to asynchronously load the texture without freezing the main WebGL thread.
+* Rotated the background scene environment by `Math.PI / 2` to align the visual galactic equator with the Cartesian coordinate mappings.
+* Hooked the background intensity into the Astrometric switcher state (`useFlightStore`). In the `Systemic` regime, the background is dimmed (`scene.backgroundIntensity = 0.3`) to make the planets visually prominent, while it returns to full exposure (`1.0`) in `Interstellar` mode.
+
+## Deviations from Original Plan
+* Completely discarded the `<Sphere>` methodology from the original `SKYDOME.md` in favor of mapping directly to `scene.background`, significantly enhancing performance and rendering correctness.
+
+## Instructions for Next Run
+The background skybox integration is complete and reactive. Further steps could involve adding UI controls for users to toggle background visibility manually, but for now, the Skydome is fully integrated as per the revised plan.
+
+---
+
 # Execution Log: Run 6 - High-Fidelity WebGL Scene Graph
 
 **Date:** 2026-05-23

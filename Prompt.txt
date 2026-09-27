@@ -1,0 +1,10 @@
+Read SYSTEM_REQUIREMENTS-3.md, UI-UX_REQUIREMENTS-3.md, Implementation Plan.md and LOG.md.
+Then read: UPDATES_2026-05-23_13-37-25.md followed by UPDATES_2026-05-23_15-02-00.md for the latest changes.
+___ I need to make updates to this. 
+Before working, develope a detailed plan. Then review that plan and make adjsutments as needed.
+The issue is the 3D Astrometric Map. 
+1. The dot sizes are too large. See the first attachment Sol to Proxima Centauri)
+2. The labels scale when you zoom in. They should be fixed size.
+3. The backgroun field of obejcts makes no sense. I don't know what these are.
+4. Scrolling should maybe be logarithmic and linked to the estimated travel distnace.
+5. I should be able to select objects

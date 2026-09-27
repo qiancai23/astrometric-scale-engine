@@ -1,0 +1,22 @@
+# Astrometric Scale Engine - AI Agent Rules
+
+## 1. Documentation & Session Logs
+When concluding a development session or significant milestone, generate an `UPDATES_{YYYY-MM-DD_HH-mm-ss}.md` log file. 
+**CRITICAL:** This file MUST include deep technical details for the next developer or agent session, including:
+- Exact filenames and relative paths modified.
+- Specific function names, React hooks, or Python methods altered.
+- Mathematical logic or algorithm changes explicitly documented.
+- Any technical debt, API limitations, or explicit exceptions caught (e.g., JPL Horizons ambiguous target restrictions).
+
+## 2. Design System & UI
+- Maintain the 'Obsidian Flux' / dark-space design aesthetic.
+- Never use generic colors; map all UI colors to CSS variables defined in `index.css` (e.g., `var(--color-bg-base)`, `var(--color-accent-active)`).
+- When altering sliders, inputs, or interactive graphs, ensure all mathematical constraints and unit conversions (like `c` to `kph`) seamlessly sync with the Zustand `useFlightStore`.
+
+## 3. Physics Constraints
+- Sublight math utilizes relativistic equations.
+- Warp math utilizes linear Alcubierre metric equations.
+- Visually validate edge-cases in charts (e.g., ensure Chemical drives at interstellar scales do not crash the SVG or lie to the user about acceleration curve width).
+
+## 4. Execution Protocol
+- Always append newly created files to `session_creation_log`.
