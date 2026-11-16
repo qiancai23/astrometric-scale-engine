@@ -1,6 +1,6 @@
 # HANDOFF
 
-Last updated: 2026-11-16 (third round of the day: date-based solar-system flights built, reviewed and clicked through; not yet committed)
+Last updated: 2026-11-16 (date-based solar-system flights built, reviewed, committed and pushed as `da297db`)
 
 ## Project goal
 Astrometric Scale Engine: a browser app (React 18, TypeScript, Vite 6, Zustand, Three.js) that answers "how long does it take to get there, and how much less do you age than the people you left behind?" The visitor picks an origin and a destination (planets and moons in the solar system, or stars, exoplanets and deep-sky objects), picks one of five engines (chemical rocket, ion drive, fusion torch, antimatter rocket, warp drive), and sees the travel time on the ship and on Earth, with a 3D map and a playable flight.
@@ -8,7 +8,7 @@ Astrometric Scale Engine: a browser app (React 18, TypeScript, Vite 6, Zustand, 
 Live site: https://astro.brucedgates.com/ (Cloudflare, deploys on push to `main`). Repository: https://github.com/qiancai23/astrometric-scale-engine.
 
 ## Current state
-**Everything from the 2026-11-16 rounds is in the working tree, uncommitted and unpushed.** The live site still shows the previous version. Nothing was committed because Bruce has not asked for a commit, and a push to `main` deploys the live site.
+**Everything from the 2026-11-16 rounds is committed and pushed to `main` (`da297db`), which triggers the Cloudflare deployment.** Nobody has checked that the live site picked it up. Bruce said the site is not business critical, so problems on it are acceptable for now.
 
 Bruce asked (2026-11-16) for the solar-system map to be accurate and date-dependent, after noticing a chemical rocket reached Mars in 1 month 6 days (real missions: 4 to 9 months). He approved building three stages and deferring gravity assists, and asked for the ion drive to be fixed because it was thousands of times stronger than a real one. Built:
 
@@ -37,7 +37,7 @@ The full technical record (every module, the math, the limits) is in `UPDATES_20
 - On the Earth to Moon map, the Moon's orbit line (seen nearly edge-on) runs through the arrival caption.
 
 ## Next steps
-1. Ask Bruce to look at it locally (`npm run dev`), then commit; push only on his go-ahead (a push deploys the live site).
+1. Check that the live site shows the new version (the flight plan panel has a "When" section with a launch date).
 2. Later, not started, Bruce agreed to wait: gravity assists (a flyby of Venus, Earth, Mars or Jupiter on the way).
 3. Optional: the rough edges listed above; load the star catalog on demand; stop the object card on the map from covering the origin or the path; delete the unused duplicate catalogs in `src/scripts/`.
 
@@ -47,7 +47,7 @@ The full technical record (every module, the math, the limits) is in `UPDATES_20
 - Earlier: keep the 0.999 c top speed "for now".
 
 ## Open questions for Bruce
-- None that block work. Commit and push wait for his word.
+- None.
 
 ## Key file paths
 - `UPDATES_2026-11-16_07-32-23.md` — technical record of the build; `UPDATES_2026-11-16_11-42-42.md` — the review and fixes after it. `UPDATES_2026-11-15_18-23-07.md` — the redesign before it.

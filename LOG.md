@@ -311,3 +311,4 @@ All five interface agents were stopped by the account's usage limit before writi
 * Verified: type-check clean, 178 Jest tests pass, production build succeeds.
 * Not committed or pushed: Bruce has not asked, and a push deploys the live site.
 * Files changed: `src/components/playback/SpeedChart.tsx`, `src/styles/playback.css`, `src/components/visualizer/OverlayDriver.tsx`, `src/components/plan/WhenSection.tsx`, `src/components/shell/BottomSheet.tsx`, `CLAUDE.md`, `HANDOFF.md`, `LOG.md`, `session_creation_log`. New: `UPDATES_2026-11-16_11-42-42.md`.
+* Later the same round: Bruce said "Just push" and that the site is not business critical, so problems are acceptable for now. Committed everything as `da297db` and pushed to `origin/main` (triggers the Cloudflare deployment; result not checked).
