@@ -8,7 +8,7 @@ Astrometric Scale Engine: a browser app (React 18, TypeScript, Vite 6, Zustand, 
 Live site: https://astro.brucedgates.com/ (Cloudflare, deploys on push to `main`). Repository: https://github.com/qiancai23/astrometric-scale-engine.
 
 ## Current state: the redesign is committed and pushed to `main`
-The whole redesign is one commit on `main` (`47e0201`, "Redesign: full-window map, flight plan, answer and playback panels"), pushed on 2026-11-15. The push should trigger the Cloudflare deployment of the live site; whether that deployment succeeded has not been checked.
+The whole redesign is one commit on `main` (`47e0201`, "Redesign: full-window map, flight plan, answer and playback panels"), pushed on 2026-11-15. Cloudflare deployed it: the live site served the new page about 4 minutes after the push (checked by its page title only, not by using the site).
 
 The owner (Bruce) approved the design review (`UIUX/DESIGN_REVIEW_2026-11-15.md`) and asked for the build. It is done:
 
@@ -27,7 +27,7 @@ Verified: 107 Jest tests pass, the TypeScript check is clean, the production bui
 
 ## Next steps
 1. Bruce looks at it on a real screen and a real phone: `npm run dev`, then open the address Vite prints. Things most likely to need tuning are listed under "Where to tune" below.
-2. Confirm https://astro.brucedgates.com/ now shows the new design (Cloudflare build may take a few minutes; if it still shows the old design, check the Cloudflare Pages build log, which may need a Node version that supports Vite 6).
+2. Bruce tries the live site (https://astro.brucedgates.com/) on a real screen and phone; tuning fixes go out as normal pushes to `main`.
 3. Optional follow-ups, none started: load the star catalog on demand so the first screen appears sooner (the catalog is a 1 MB chunk loaded before the interface); stop the object card on the map from covering the origin or the path; delete the unused duplicate catalogs in `src/scripts/`.
 
 ## Open questions for Bruce

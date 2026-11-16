@@ -276,3 +276,4 @@ All five interface agents were stopped by the account's usage limit before writi
 * `output.txt` (scratch dump of Gaia warnings) added to `.gitignore` instead of being committed. `PROMPT.md` (the original design-review prompt) was committed.
 * Files changed: `.gitignore`, `LOG.md`, `HANDOFF.md`.
 * Later the same round: Bruce said "Push" and "keep the cap at 0.999 for now". Pushed `47e0201` to `origin/main` (triggers Cloudflare deployment; result not checked). No sixth unlimited engine. HANDOFF.md updated to match.
+* Confirmed the live site serves the new design (page title changed about 4 minutes after the push).
