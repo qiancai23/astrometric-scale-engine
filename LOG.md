@@ -139,3 +139,139 @@ You must instantiate a centralized global store (Zustand) to handle core flight 
 ## Deviations from Original Plan
 * Since the project directory wasn't completely empty, the standard `npx create-vite` command aborted. Instead of fighting the scaffolding tool immediately, I initialized a minimal `package.json` with Jest and TypeScript just to build the Physics module first. The Vite/React scaffolding can be integrated during Run 3 or 4 when we actually start building UI components.
 * Relativistic Kinetic Energy (`E_k`) for sublight calculates only the acceleration phase energy, which is standard. For Warp drive, an arbitrary reactor upkeep constant ($1 \times 10^{12}$) was used to generate meaningful Exajoule outputs for MVP demonstration.
+
+
+---
+
+# 2026-11-15 — Project orientation and session-continuity files
+
+**Done**
+* Read README.md and scanned all tracked files (source, scripts, requirement docs, UPDATES logs, .agentrules, Prompt.txt).
+* Created CLAUDE.md (commands, architecture, rules carried over from .agentrules, gotchas), HANDOFF.md (goal, state, next steps, open questions) and appended this entry to LOG.md.
+
+**Decisions**
+* Kept the existing LOG.md content untouched and appended, because the global rule says LOG.md is append-only.
+* Documented that `scripts/*.json` (project root) are the catalogs the app imports, and `src/scripts/*.json` are unused copies, based on a grep of the import statements.
+* Named the pending work as the five 3D-map fixes listed in Prompt.txt, since README says "Next up: 3D Astrometric Map fixes".
+
+**Not done**
+* No code changed; build and tests were not run, so current pass/fail status is unknown.
+
+**Files changed**
+* CLAUDE.md (new), HANDOFF.md (new), LOG.md (appended)
+* session_creation_log not updated (it is a mixed-encoding file; flagged in CLAUDE.md).
+
+
+---
+
+# 2026-11-15 (second round) — Phase 1 critical design review of the live site
+
+**Request**
+Bruce asked for a three-phase redesign effort (critical design review, then a detailed design specification, then an implementation blueprint for other AI models), with no production code at this stage and with approval required after the review.
+
+**Done**
+* Read all source under `src/`, plus `index.html`, `UIUX/DESIGN.md`, `public/help.html`, and inspected both catalogs.
+* Fetched the live site https://astro.brucedgates.com/ (HTML, headers, asset sizes) and captured nine screenshots in headless Microsoft Edge at 1440, 1024 and 390 pixels wide, across first-run, Earth-to-Mars and Sol-to-Proxima-Centauri states.
+* Wrote the review: `UIUX/DESIGN_REVIEW_2026-11-15.md`. It lists what works, 13 defects visible on the live site, analysis by area, a proposed creative direction ("Plan it, then fly it"), a prioritized list in four tiers, and four decisions for Bruce.
+* Saved the screenshots to `UIUX/review-2026-11-15/`.
+* Updated the README status block (last touched; deploy target is now the live address) and rewrote HANDOFF.md.
+
+**Findings worth remembering**
+* The site is deployed (Cloudflare), contrary to the README and the previous HANDOFF.
+* Header shows a literal `\U03B3` (unprocessed escape in JSX text, `GlobalHeader.tsx` line 47).
+* The chart never resizes from its default 800x200 because the ResizeObserver effect in `KinematicCharts.tsx` runs while the empty-state message is rendered instead of the container; it is clipped on windows narrower than 1600 pixels.
+* `FlightConfig.tsx` and `SceneGraph.tsx` use CSS variables that are not defined in `src/index.css` (`--color-accent`, `--color-bg`, `--color-text`).
+* At 390 pixels wide the page is 677 pixels wide; there are no responsive rules.
+* First load is about 5.4 MB: a 2.1 MB JavaScript file (517 KB compressed, catalogs inlined) and a 4.86 MB background image.
+
+**Decisions**
+* Stored the review and screenshots under `UIUX/` because that folder already holds the design brief, and because Phase 2 must not depend on chat history.
+* Did not fix any defect, even the one-line ones, because the request said no production code at this stage.
+* Did not write an `UPDATES_*.md` file: `.agentrules` describes it as a record of code and math changes, and there were none.
+* Stopped after Phase 1 because the request requires Bruce's approval of the direction before the specification is written.
+
+**Not done / not verified**
+* Build and tests not run.
+* Two 3D rendering oddities seen in the headless captures (dotted blue figure around Sol; horizontal banding in the Systemic view) are unconfirmed on a real graphics card.
+
+**Files changed**
+* `UIUX/DESIGN_REVIEW_2026-11-15.md` (new), `UIUX/review-2026-11-15/*.png` (nine new files), `HANDOFF.md` (rewritten), `LOG.md` (appended), `README.md` (status block), `session_creation_log` (appended)
+
+
+---
+
+# 2026-11-15 (third round) — Mockups of the proposed redesign
+
+**Request**
+Bruce could not visualize the direction proposed in the design review and asked for rendered mockups.
+
+**Done**
+* Built three static mockup screens on a private design canvas: https://claude.ai/artifact/VVMSzcP3Ti84cMYTqFUbrB
+  1. Desktop, flight in progress: Sol to Proxima Centauri, antimatter rocket at 1 g, playback 34 percent complete, with the flight plan panel, the answer panel (two clocks), the playback bar, and a card on a hovered star.
+  2. Desktop, first visit: Earth to Mars preloaded, the destination search open, famous-flight shortcuts.
+  3. Phone: same interstellar flight in warp mode (amber), map on top and a slide-up panel below.
+* Generated two star-map background images (interstellar and inner solar system) with a script and uploaded them to the canvas.
+
+**Decisions**
+* The mockups show the recommended option for each open decision (full-window map with floating panels; a real phone layout), so Bruce can judge the recommendation directly.
+* Did not use Bruce's saved design system "Cinematic Lens", because the mockups have to show this site's own cyan and amber console look.
+* Kept the mockups static (no working controls); they illustrate layout and visual language only.
+* Figures on the mockups were calculated by hand from the same formulas the engine uses, at each engine's maximum setting; they are illustrative.
+
+**Not verified**
+* The canvas was published without rendering it back, so layout glitches are possible.
+
+**Files changed**
+* `HANDOFF.md` (added the mockup link), `LOG.md` (appended). No source files changed. Mockup sources live on the canvas, not in the repository.
+
+
+---
+
+# 2026-11-15 (fourth round) — Redesign built ("Plan it, then fly it")
+
+**Request**
+Bruce approved the design review and all four of its open decisions (full-window map with floating panels; repairs plus headline, playback and map upgrades; a full phone layout; the name "Astrometric Scale Engine"), and added three requirements: as much animation as possible, a maximum speed of 0.999 c, and stars that are as easy to find as possible. He asked for the build to start, orchestrated from one session with sub-agents at appropriate model levels.
+
+**Done**
+* Wrote the shared foundation directly: types, engine definitions (antimatter limit 0.999 c), a moment-by-moment flight model (`src/physics/flightProfile.ts`), the rewritten store with playback, map layers and shareable links, formatting, design tokens, motion helpers. `src/physics/kinematicsEngine.ts` was not changed.
+* Wrote the build contract `UIUX/BUILD_SPEC_2026-11-15.md` and delegated seven pieces: catalog and search (Sonnet), 3D map (Opus), flight plan panel, answer panel, playback panel, app shell, help page (Sonnet each).
+* Integrated the pieces, then checked the running app in headless Microsoft Edge at four window widths and fixed what the screenshots showed (details under "Fixes after seeing it run").
+* Replaced the 4.86 MB background image with a 245 KB version; added favicon, robots.txt, page description, sharing preview image.
+* Full technical record: `UPDATES_2026-11-15_18-23-07.md`. Result screenshots: `UIUX/build-2026-11-15/`.
+
+**Decisions**
+* Skipped the separate specification and blueprint phases as standalone deliverables because Bruce asked to begin building; the build spec file serves as the compact, self-contained contract instead.
+* Interpreted "update the max speed to 0.999 c" as raising the antimatter rocket's speed limit to 0.999 c, not as adding a separate unlimited "torchship" engine. Consequence: 1 g to Andromeda takes about 114,000 years of ship time, not the 28 years an unlimited 1 g flight would give.
+* Kept the two separate maps (solar system in AU, stars in parsecs) but hid the switch behind the search: choosing an object from the other map switches maps automatically.
+* A loaded flight (famous flight or shared link) resets every engine's tuning to defaults, so the engine comparison cards are not skewed by leftovers.
+* The original background image was moved to `source-assets/`, not deleted. The five old components were removed (they remain in git history).
+* Did not commit or deploy: not asked to.
+
+**Fixes after seeing it run**
+* Playback panel was squeezed to 320 px between the side panels at 1024 px wide; between 1024 and 1359 px it now runs under the answer panel.
+* Search result names were truncated; the "switches map" note moved into the second line.
+* Destination and origin labels on the map ran under the side panels or off the phone screen; they now fall back to above or below the ring and stay clear of the zoom buttons and scale bar.
+* The ship's speed tag sat on top of the "FLIP" caption; it now sits on the other side of the line. The caption hides when both sides are taken.
+* The phone hint text overlapped star labels; it is now a short pill at the top of the map.
+* Loosely spaced numerals in the monospace font; tightened with word spacing.
+
+**Interruption**
+All five interface agents were stopped by the account's usage limit before writing anything, and were resumed after it reset. No work was lost.
+
+**Verified**
+* `npm test`: 107 tests in 6 suites pass. `npx tsc --noEmit` clean. `npx vite build` succeeds.
+* Headless Edge: no console errors, no horizontal overflow at 1440, 1280, 1024 and 390 px. Clicking a star, "Fly here", playing to arrival, searching across maps, layers, collapsing panels and sharing all work.
+
+**Not verified**
+* A real graphics card, a real phone, Firefox, Safari, a screen reader, reduced-motion mode.
+
+**Files changed**
+* New: everything under `src/components/{shell,plan,answer,playback,common}/`, `src/components/visualizer/` (14 files), `src/styles/`, `src/data/`, `src/lib/`, `src/types.ts`, `src/vite-env.d.ts`, `src/physics/flightProfile.ts` and its test, `public/favicon.svg`, `public/robots.txt`, `public/og-image.png`, `public/assets/textures/milky_way_2k.jpg`, `UIUX/BUILD_SPEC_2026-11-15.md`, `UIUX/build-2026-11-15/*.png`, `UPDATES_2026-11-15_18-23-07.md`.
+* Changed: `src/state/useFlightStore.ts` and its test, `src/index.css`, `src/App.tsx`, `src/main.tsx`, `index.html`, `vite.config.ts`, `public/help.html`, `package.json` and `package-lock.json` (added `@fontsource-variable/inter`, `@fontsource-variable/jetbrains-mono`), `CLAUDE.md`, `README.md`, `HANDOFF.md`, `session_creation_log`.
+* Removed: `src/components/Dashboard.tsx`, `GlobalHeader.tsx`, `FlightConfig.tsx`, `TelemetryHUD.tsx`, `charts/KinematicCharts.tsx`, `visualizer/SceneGraph.tsx`. Moved: `public/assets/textures/milky_way.jpg` to `source-assets/milky_way_original.jpg`.
+
+## 2026-11-15 — Round 5: commit of the redesign
+* Bruce asked for a commit. Re-ran checks first: `npx tsc --noEmit` clean, 107 Jest tests pass.
+* Committed the whole redesign as one local commit on `main` (the pieces depend on each other; splitting would leave commits that do not build). Not pushed: pushing to `main` deploys the live site through Cloudflare, so that waits for Bruce's go-ahead.
+* `output.txt` (scratch dump of Gaia warnings) added to `.gitignore` instead of being committed. `PROMPT.md` (the original design-review prompt) was committed.
+* Files changed: `.gitignore`, `LOG.md`, `HANDOFF.md`.

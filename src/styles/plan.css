@@ -1,0 +1,556 @@
+/* Flight plan panel. Only tokens from index.css; data colors come inline from the catalog. */
+
+.plan-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--panel-padding);
+  min-width: 0;
+}
+.plan-root.is-compact {
+  gap: var(--space-4);
+}
+.plan-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.plan-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.plan-quiet {
+  color: var(--color-text-muted);
+  font-size: var(--text-micro);
+  font-weight: 400;
+}
+.plan-ellipsis {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plan-dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  color: var(--color-text-faint);
+}
+
+@keyframes plan-name-in {
+  from { opacity: 0; transform: translateY(-7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes plan-swap-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes plan-sweep {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(220%); }
+}
+
+/* ---------- From / To ---------- */
+
+.plan-targets {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.plan-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-control);
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-med) ease;
+}
+.plan-field--button {
+  min-height: 76px;
+  padding-right: 60px; /* room for the swap button */
+}
+.plan-field--button:hover {
+  background: var(--color-bg-control-hover);
+  border-color: var(--color-accent-a55);
+}
+.plan-field--button:active {
+  transform: scale(0.985);
+}
+.plan-field-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plan-field-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--text-title);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  animation: plan-name-in var(--dur-med) var(--ease-out) both;
+}
+.plan-field-sub {
+  min-height: 1.2em;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.plan-field--input {
+  border-color: var(--color-accent-active);
+  background: var(--color-accent-a06);
+  box-shadow: var(--glow-accent);
+  gap: var(--space-2);
+}
+.plan-field--input .plan-field-label {
+  color: var(--color-accent-active-soft);
+}
+.plan-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--color-text-muted);
+}
+.plan-input-wrap svg {
+  flex: 0 0 auto;
+}
+.plan-root input.plan-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--text-title);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.plan-root input.plan-input:focus-visible {
+  outline: none;
+}
+
+.plan-swap {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  width: var(--hit-target);
+  height: var(--hit-target);
+  margin-top: calc(var(--hit-target) / -2);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  box-shadow: var(--shadow-pop);
+  transition: opacity var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease,
+    box-shadow var(--dur-med) ease, scale var(--dur-fast) var(--ease-out);
+}
+.plan-swap:hover:not(:disabled) {
+  border-color: var(--color-accent-active);
+  color: var(--color-accent-active-soft);
+  box-shadow: var(--shadow-pop), var(--glow-accent);
+}
+.plan-swap:active:not(:disabled) {
+  scale: 0.92;
+}
+.plan-swap.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.plan-swap-icon {
+  display: grid;
+  place-items: center;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+/* ---------- Picker popover ---------- */
+
+.plan-open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.plan-pop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-pop);
+  transform-origin: top center;
+  animation: drop-in var(--dur-med) var(--ease-out) both;
+}
+.plan-chips {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  scrollbar-width: none;
+}
+.plan-chips::-webkit-scrollbar {
+  display: none;
+}
+.plan-chip {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-control);
+  color: var(--color-text-secondary);
+  font-size: var(--text-small);
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+}
+.plan-chip:hover {
+  background: var(--color-bg-control-hover);
+}
+.plan-chip:active {
+  transform: scale(0.96);
+}
+.plan-chip[aria-pressed='true'] {
+  border-color: var(--color-accent-active);
+  background: var(--color-accent-a12);
+  color: var(--color-accent-active-pale);
+  font-weight: 600;
+}
+
+.plan-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.plan-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 48px;
+  min-width: 0;
+  border-radius: var(--radius-small);
+  background: transparent;
+  transition: background-color var(--dur-fast) ease;
+}
+.plan-row.enter {
+  animation: rise-in var(--dur-med) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+.plan-row.is-active {
+  background: var(--color-accent-a12);
+  box-shadow: inset 2px 0 0 var(--color-accent-active);
+}
+.plan-row-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2) var(--space-1) var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+.plan-row-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.plan-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-title);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.plan-mark {
+  background: transparent;
+  color: var(--color-accent-active-soft);
+}
+.plan-row-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+}
+.plan-row-alias {
+  color: var(--color-text-secondary);
+}
+.plan-row-side {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  max-width: 38%;
+}
+.plan-row-dist {
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.plan-tag {
+  padding: 1px 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.plan-row-map {
+  color: var(--color-accent-active-soft);
+}
+.plan-row-locate {
+  flex: 0 0 auto;
+  width: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-small);
+  color: var(--color-text-muted);
+  transition: color var(--dur-fast) ease, background-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+}
+.plan-row-locate:hover {
+  color: var(--color-accent-active-soft);
+  background: var(--color-bg-control-hover);
+}
+.plan-row-locate:active {
+  transform: scale(0.9);
+}
+.plan-empty {
+  padding: var(--space-4) var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--text-small);
+}
+.plan-pop-foot {
+  padding: 0 var(--space-3) var(--space-1);
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+}
+
+/* ---------- Engine cards ---------- */
+
+.plan-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-control);
+  color: var(--color-text-secondary);
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-out), color var(--dur-fast) ease;
+}
+.plan-card:hover {
+  background: var(--color-bg-control-hover);
+  border-color: var(--color-border-strong);
+  transform: translateX(2px);
+}
+.plan-card:active {
+  transform: scale(0.985);
+}
+.plan-card.is-selected {
+  border-color: var(--color-accent-active);
+  background: var(--color-accent-a12);
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+.plan-card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+  font-size: var(--text-body);
+}
+.plan-card-name {
+  flex: 1 1 auto;
+}
+.plan-card-time {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  word-spacing: -0.22em;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.plan-card.is-warp .plan-card-time {
+  color: var(--color-accent-warp-soft);
+}
+.plan-bar {
+  display: block;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-track);
+  overflow: hidden;
+}
+.plan-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--color-text-faint);
+  transition: width var(--dur-slow) var(--ease-out), background-color var(--dur-med) ease;
+}
+.plan-card.is-selected .plan-bar-fill {
+  background: var(--color-accent-active);
+}
+.plan-card.is-warp .plan-bar-fill {
+  background: var(--color-accent-warp);
+}
+.plan-sheen {
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, var(--color-accent-a35), transparent);
+  animation: plan-sweep 900ms var(--ease-out) both;
+}
+.plan-blurb {
+  min-height: 2.8em;
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+  animation: fade-in var(--dur-med) ease both;
+}
+
+/* Compact: one scrolling row of chips. */
+.plan-cards.is-compact {
+  position: relative;
+  flex-direction: row;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  scrollbar-width: none;
+}
+.plan-cards.is-compact::-webkit-scrollbar {
+  display: none;
+}
+.plan-cards.is-compact .plan-card {
+  flex: 0 0 auto;
+  min-width: 112px;
+  min-height: var(--hit-target);
+  padding: var(--space-2) var(--space-3);
+}
+.plan-cards.is-compact .plan-card:hover {
+  transform: none;
+}
+.plan-cards.is-compact .plan-card-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.plan-cards.is-compact .plan-bar {
+  height: 3px;
+}
+
+/* ---------- Tuning ---------- */
+
+.plan-swap-in {
+  animation: plan-swap-in var(--dur-med) var(--ease-out) both;
+  min-width: 0;
+}
+.plan-reset {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-small);
+  color: var(--color-text-secondary);
+  font-size: var(--text-small);
+  transition: color var(--dur-fast) ease, background-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+}
+.plan-reset:hover {
+  color: var(--color-accent-active-soft);
+  background: var(--color-bg-control-hover);
+}
+.plan-reset:active {
+  transform: scale(0.95);
+}
+.plan-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: fade-in var(--dur-med) ease both;
+}
+.plan-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.plan-slider-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: var(--space-3);
+}
+.plan-slider-label {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.plan-slider-readout {
+  margin-left: auto;
+  text-align: right;
+  font-size: var(--text-small);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.plan-ticks {
+  position: relative;
+  height: 16px;
+  margin-top: -4px;
+}
+.plan-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+}
+.plan-note {
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+@media (pointer: coarse) {
+  .plan-chip {
+    min-height: var(--hit-target);
+  }
+  .plan-reset {
+    min-height: var(--hit-target);
+  }
+}

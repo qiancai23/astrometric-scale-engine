@@ -2,14 +2,58 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Astrometric Horizon Terminal</title>
-    <!-- Preconnect to Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Astrometric Scale Engine — how long does it take to get there?</title>
+    <meta name="description" content="Plan a flight between planets or stars, pick an engine from a chemical rocket to a warp drive, and see how long it takes on the ship and on Earth. Real relativity and real star catalogs." />
+    <meta name="theme-color" content="#04060c" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="canonical" href="https://astro.brucedgates.com/" />
+    <meta property="og:title" content="Astrometric Scale Engine — how long does it take to get there?" />
+    <meta property="og:description" content="Plan a flight between planets or stars, pick an engine from a chemical rocket to a warp drive, and see how long it takes on the ship and on Earth." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://astro.brucedgates.com/" />
+    <meta property="og:image" content="https://astro.brucedgates.com/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Astrometric Scale Engine — how long does it take to get there?" />
+    <meta name="twitter:description" content="Plan a flight between planets or stars and see how long it takes on the ship and on Earth." />
+    <meta name="twitter:image" content="https://astro.brucedgates.com/og-image.png" />
+    <style>
+      html, body { margin: 0; background: #04060c; }
+      #boot {
+        position: fixed; inset: 0; z-index: 100; background: #04060c; color: #a3b0c2;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        transition: opacity 500ms ease;
+      }
+      #boot.boot-out { opacity: 0; pointer-events: none; }
+      #boot svg { width: 56px; height: 56px; color: #22d3ee; }
+      #boot .boot-orbit { transform-origin: 13px 13px; animation: boot-spin 6s linear infinite; }
+      #boot .boot-label {
+        font: 600 13px/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 0.16em; color: #e8edf5;
+      }
+      #boot .boot-line { position: relative; width: 160px; height: 2px; overflow: hidden; background: rgba(148, 163, 184, 0.16); border-radius: 2px; }
+      #boot .boot-line::after {
+        content: ''; position: absolute; top: 0; bottom: 0; width: 40%; background: #22d3ee; border-radius: 2px;
+        animation: boot-run 1.4s ease-in-out infinite;
+      }
+      #boot noscript { max-width: 320px; text-align: center; font: 14px/1.5 system-ui, sans-serif; }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      @keyframes boot-run { from { left: -40%; } to { left: 100%; } }
+      @media (prefers-reduced-motion: reduce) {
+        #boot .boot-orbit, #boot .boot-line::after { animation-duration: 0.001ms; animation-iteration-count: 1; }
+        #boot { transition-duration: 0.001ms; }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" role="status" aria-label="Loading">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <circle cx="13" cy="13" r="3.2" fill="currentColor" stroke="none" />
+        <g class="boot-orbit"><ellipse cx="13" cy="13" rx="11.5" ry="5" transform="rotate(-28 13 13)" /></g>
+      </svg>
+      <div class="boot-label">ASTROMETRIC SCALE ENGINE</div>
+      <div class="boot-line"></div>
+      <noscript>Astrometric Scale Engine needs JavaScript to run. Please turn it on in your browser and reload the page.</noscript>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

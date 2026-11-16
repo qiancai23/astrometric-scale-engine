@@ -333,20 +333,25 @@
   <a href="#quickstart">Quick Start</a>
   <a href="#layout">Interface Layout</a>
 
-  <div class="nav-group-label">Controls</div>
-  <a href="#regime">Astrometric Regime</a>
-  <a href="#targets">Target Coordinates</a>
-  <a href="#propulsion">Propulsion System</a>
-  <a href="#kinematics">Kinematic Config</a>
+  <div class="nav-group-label">Plan a Flight</div>
+  <a href="#targets">Choosing Places</a>
+  <a href="#engines">Choosing an Engine</a>
+  <a href="#tuning">Tuning the Ship</a>
 
   <div class="nav-group-label">Reading Results</div>
-  <a href="#header">Mission Header</a>
-  <a href="#telemetry">Telemetry HUD</a>
-  <a href="#charts">Flight Charts</a>
-  <a href="#viewport">3D Viewport</a>
+  <a href="#answer">The Answer Panel</a>
+  <a href="#playback">Playback and the Chart</a>
+  <a href="#map">The Map</a>
+
+  <div class="nav-group-label">Using the App</div>
+  <a href="#sharing">Sharing a Flight</a>
+  <a href="#phones">Phones and Tablets</a>
+  <a href="#shortcuts">Keyboard Shortcuts</a>
+  <a href="#accessibility">Accessibility</a>
 
   <div class="nav-group-label">Concepts</div>
   <a href="#relativity">Relativistic Travel</a>
+  <a href="#example">Worked Example</a>
   <a href="#warp">Warp Drive Physics</a>
   <a href="#catalogs">Data Catalogs</a>
 
@@ -357,7 +362,7 @@
 
 <!-- ── Main Content ── -->
 <main>
-  <a class="back-link" href="/">← Return to Dashboard</a>
+  <a class="back-link" href="./">← Back to the app</a>
 
   <h1>
     Astrometric Scale Engine
@@ -366,298 +371,340 @@
 
   <div class="hero-bar">
     <div class="dot"></div>
-    <p>Configure an origin, destination, and propulsion system to instantly compute relativistic travel times, energy requirements, and mission trajectories across any scale — from our solar system to the edge of the galaxy.</p>
+    <p>Pick where you are leaving from and where you are going, pick an engine, and see how long the trip takes for you and for everyone left behind. Then press a button and watch the flight happen on a 3D map.</p>
   </div>
 
   <!-- ────────────────────────── OVERVIEW ────────────────────────────── -->
   <h2 id="overview">Overview</h2>
-  <p>The Astrometric Scale Engine is a physics-accurate mission planning tool that solves one fundamental question: <strong>how long does it actually take to get there, and what does it cost?</strong></p>
-  <p>It applies the real equations of special relativity for sublight travel and the Alcubierre flat-metric model for hypothetical warp drive. All durations, velocities, and energies update in real time as you adjust the controls.</p>
+  <p>The Astrometric Scale Engine answers one question: <strong>how long does it really take to get there?</strong> It works for a hop to the Moon, a voyage to another star, or a trip to another galaxy. The live version is at <a href="https://astro.brucedgates.com/">astro.brucedgates.com</a>.</p>
+  <p>Sublight engines use the real equations of special relativity. The warp drive uses a simple model of the Alcubierre warp bubble. Everything updates the moment you change a place, an engine or a slider.</p>
 
   <div class="grid-2">
     <div class="card">
-      <div class="card-title">⚡ Sublight Physics</div>
-      <p>True relativistic kinematics — proper time, coordinate time, time dilation, and kinetic energy are calculated from first principles using constant proper acceleration and an optional coasting phase.</p>
+      <div class="card-title">Sublight Physics</div>
+      <p>True relativistic travel: steady acceleration felt by the crew, an automatic coast if the speed limit is reached, and a mirror-image braking burn. Ship time and Earth time are computed separately.</p>
     </div>
     <div class="card">
-      <div class="card-title">🌀 Warp Drive</div>
-      <p>The Alcubierre metric model: the ship's interior remains in flat space-time (Lorentz factor = 1) while the metric itself contracts ahead and expands behind. Superluminal travel is possible but speculative.</p>
+      <div class="card-title">Warp Drive</div>
+      <p>A hypothetical Alcubierre bubble. The ship sits in flat space-time, so there is no time dilation and the clocks agree. No one knows how to build one.</p>
     </div>
     <div class="card">
-      <div class="card-title">🌌 Real Stellar Data</div>
-      <p>The Interstellar catalog sources data from the HYG star database (1,400+ named stars), the NASA Exoplanet Archive (1,500+ confirmed exoplanets), and the Messier catalog of deep-sky objects.</p>
+      <div class="card-title">Real Stellar Data</div>
+      <p>Stars come from the HYG star database, exoplanets from the NASA Exoplanet Archive, and deep-sky objects from the Messier catalog. Stars are drawn in their real colour and brightness.</p>
     </div>
     <div class="card">
-      <div class="card-title">🪐 Solar System</div>
-      <p>The Systemic catalog uses real orbital ephemeris data from JPL Horizons — planets, dwarf planets, asteroids, and active spacecraft at their actual 3D positions in AU.</p>
+      <div class="card-title">Real Solar System</div>
+      <p>Planets, moons, dwarf planets, asteroids and spacecraft sit at real positions from JPL Horizons, measured in astronomical units (AU).</p>
     </div>
   </div>
 
   <!-- ────────────────────────── QUICKSTART ──────────────────────────── -->
   <h2 id="quickstart">Quick Start</h2>
+  <p>The page opens on a flight that is already planned: <strong>Earth to Mars at 1 g</strong> with a fusion torch. You do not have to set anything up to see an answer.</p>
   <ol class="steps">
     <li>
-      <div>Choose an <strong>Astrometric Regime</strong> in the left column — <code>Systemic</code> for travel within our solar system, <code>Interstellar</code> for deep-space journeys.</div>
+      <div>Look at <strong>The answer</strong> panel on the right. It already shows how long the trip takes for you and for Earth.</div>
     </li>
     <li>
-      <div>Select an <strong>Origin Node</strong> (your departure point) from the dropdown. Use the search box to filter by name or constellation.</div>
+      <div>Press <strong>Fly this flight</strong> in the bottom panel. A ship marker crosses the map while the clocks run.</div>
     </li>
     <li>
-      <div>Select a <strong>Destination Node</strong>. The 3D viewport will immediately draw a travel vector between the two points.</div>
+      <div>Try a <strong>famous flight</strong> from the row of buttons in the bottom panel, such as Apollo to the Moon, Sol to Proxima Centauri or 1 g to Andromeda.</div>
     </li>
     <li>
-      <div>Choose an <strong>Engine Core Tier</strong> from Tier 1 (Chemical Rocket) to Tier 5 (Alcubierre Warp).</div>
+      <div>Make it your own: change <strong>From</strong> and <strong>To</strong> in the <strong>Flight plan</strong> panel on the left, click a different engine card, or drag a slider.</div>
     </li>
     <li>
-      <div>Adjust <strong>Acceleration</strong>, <strong>Velocity Ceiling</strong>, and <strong>Hull Mass</strong> using the sliders. Results update instantly in the header and right-side Telemetry HUD.</div>
+      <div>Press <strong>Share this flight</strong> in the top bar to copy a link to exactly what you built.</div>
     </li>
   </ol>
 
   <!-- ────────────────────────── LAYOUT ──────────────────────────────── -->
   <h2 id="layout">Interface Layout</h2>
-  <p>The dashboard is a non-scrolling three-column layout:</p>
+  <p>The map fills the whole window. The panels float over it and can be tucked away.</p>
   <table>
     <thead>
       <tr><th>Region</th><th>Contents</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Global Header (top)</strong></td><td>Mission epoch, Peak Lorentz Factor (γ), and computed arrival timestamps for both Earth-frame and ship-frame observers.</td></tr>
-      <tr><td><strong>Left Column</strong></td><td>Flight Configuration panel — Regime, Origin/Destination selectors, Engine Tier, and all kinematic sliders.</td></tr>
-      <tr><td><strong>Centre Column (upper)</strong></td><td>3D WebGL viewport — an interactive star map of the active catalog with your travel vector rendered.</td></tr>
-      <tr><td><strong>Centre Column (lower)</strong></td><td>2D analytics charts — Velocity vs. Time and Position vs. Time for the current flight profile.</td></tr>
-      <tr><td><strong>Right Column</strong></td><td>Telemetry HUD — chronological delta, kinematic readouts, power/logistics figures, and 3D camera control reference.</td></tr>
+      <tr><td><strong>Top bar</strong></td><td>The map switch (<strong>Solar system</strong> or <strong>Stars</strong>), the <strong>Layers</strong> menu, <strong>Share this flight</strong>, and <strong>Help</strong>, which opens this guide in a new tab.</td></tr>
+      <tr><td><strong>Flight plan (left)</strong></td><td>The From and To pickers with a swap button, five engine cards, and the tuning sliders.</td></tr>
+      <tr><td><strong>The answer (right)</strong></td><td>Two clocks (you and Earth), one plain sentence, three stat tiles, and "In perspective" comparisons.</td></tr>
+      <tr><td><strong>Playback (bottom)</strong></td><td>Fly this flight, famous flights, play and pause, speed, live readouts, and the speed chart that doubles as a scrubber.</td></tr>
+      <tr><td><strong>The map</strong></td><td>A 3D view of the solar system or the stars, with your route drawn on it.</td></tr>
     </tbody>
   </table>
-
-  <!-- ────────────────────────── REGIME ──────────────────────────────── -->
-  <h2 id="regime">Astrometric Regime</h2>
-  <p>The regime selector determines which catalog is active and which unit system is used for distance calculations.</p>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">🪐 Systemic (Local / AU)</div>
-      <p>Displays solar system bodies — planets, dwarf planets, asteroids, and spacecraft. Coordinates are in <strong>Astronomical Units (AU)</strong>. Recommended for sublight, near-future propulsion tiers.</p>
-    </div>
-    <div class="card">
-      <div class="card-title">🌌 Interstellar (Deep Space / PC)</div>
-      <p>Displays the full stellar catalog. Coordinates are in <strong>Parsecs (pc)</strong>. Use for any journey beyond the heliopause. Best combined with Tier 4 (Antimatter) or Tier 5 (Warp).</p>
-    </div>
-  </div>
-
-  <div class="callout warning">
-    <div class="callout-icon">⚠️</div>
-    <div class="callout-body"><p><strong>Switching regimes clears your Origin and Destination</strong> selections, since the two catalogs use incompatible coordinate systems. You will need to re-select both nodes after switching.</p></div>
-  </div>
+  <p>Each side panel has a handle on its edge. Click it, or press <kbd>[</kbd> (left) or <kbd>]</kbd> (right), to collapse or reopen the panel and give the map more room.</p>
 
   <!-- ────────────────────────── TARGETS ─────────────────────────────── -->
-  <h2 id="targets">Target Coordinates</h2>
-  <h3>Origin Node</h3>
-  <p>Your departure point. Select from the dropdown after optionally filtering by name, constellation, or catalog category. Once selected, a card appears below the dropdown showing the object's distance from Sol and a contextual description.</p>
+  <h2 id="targets">Choosing Places</h2>
+  <p>The <strong>Flight plan</strong> panel has two pickers: <strong>From</strong> (where you leave) and <strong>To</strong> (where you arrive). The distance between them is the straight-line distance in space.</p>
 
-  <h3>Destination Node</h3>
-  <p>Your arrival point. Works identically to Origin. The engine computes the 3D Euclidean distance between the two coordinate vectors in the active unit system and converts to meters for all physics calculations.</p>
+  <h3>Searching</h3>
+  <p>Click a picker and type. Search covers both maps at once, so you can find anything without switching first. It is forgiving:</p>
+  <ul style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;"><strong>Nicknames and aliases</strong> — "Alpha Centauri", "North Star", "M31", "galactic center".</li>
+    <li style="margin-bottom:6px;"><strong>Expanded names</strong> — "Epsilon Eridani".</li>
+    <li style="margin-bottom:6px;"><strong>Constellations</strong> — type "orion" to list its stars.</li>
+    <li style="margin-bottom:6px;"><strong>Kinds of object</strong> — type "black hole" or similar.</li>
+    <li style="margin-bottom:6px;"><strong>Small typos</strong> — a near miss still finds the right object.</li>
+  </ul>
+  <p>Use the <kbd>↑</kbd> and <kbd>↓</kbd> arrow keys to move through results and <kbd>Enter</kbd> to choose one. Hovering a result pings that object on the map, and its <strong>show on map</strong> button flies the camera there.</p>
 
-  <h3>Category Filter (Interstellar only)</h3>
-  <p>In Interstellar mode, a category dropdown appears above each selector to narrow the catalog:</p>
-  <table>
-    <thead><tr><th>Category</th><th>Source</th><th>Contents</th></tr></thead>
-    <tbody>
-      <tr><td>HYG Database</td><td>astronexus/HYG-Database v3.6</td><td>Named stars and bright Bayer-designated stars from the Yale Bright Star Catalog and Hipparcos, with spectral class and 3D position in parsecs.</td></tr>
-      <tr><td>NASA Exoplanet Archive</td><td>NASA TAP Service</td><td>Confirmed exoplanets within 100 pc, including mass estimates where available.</td></tr>
-      <tr><td>Messier Catalog</td><td>Static astrometric data</td><td>Deep-sky objects: nebulae, galaxies, and clusters with descriptive narratives.</td></tr>
-      <tr><td>Static Astrometric Anchors</td><td>Curated</td><td>Notable waypoints: Sagittarius A*, Voyager 1 &amp; 2, New Horizons, Pioneer 10 &amp; 11.</td></tr>
-    </tbody>
-  </table>
+  <h3>Browsing</h3>
+  <p>If you would rather not type, open the picker and use the <strong>browse lists</strong> for ready-made groups of places such as planets, nearby stars and famous objects.</p>
 
-  <!-- ────────────────────────── PROPULSION ──────────────────────────── -->
-  <h2 id="propulsion">Propulsion System</h2>
-  <p>Select an Engine Core Tier to set the physical limits of your drive. Each tier enforces a maximum acceleration and a velocity ceiling for sublight drives.</p>
+  <h3>Swapping and switching maps</h3>
+  <p>The <strong>swap</strong> button between the pickers reverses the trip. If you choose a place that lives on the other map (a star while you are looking at the Solar system, say), the app switches maps for you.</p>
+
+  <!-- ────────────────────────── ENGINES ─────────────────────────────── -->
+  <h2 id="engines">Choosing an Engine</h2>
+  <p>Five <strong>engine cards</strong> sit under the pickers. Each card shows how long <em>this trip</em> would take with that engine, drawn as a bar on one shared logarithmic scale. Every bar follows the same ruler, so you can compare a chemical rocket with a warp drive at a glance even when one takes days and the other takes millennia. Click a card to pick that engine.</p>
 
   <table>
     <thead>
-      <tr><th>Tier</th><th>Drive Type</th><th>Max Accel.</th><th>Velocity Ceiling</th><th>Notes</th></tr>
+      <tr><th>Engine</th><th>Acceleration range</th><th>Speed limit range</th><th>Notes</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td class="mono">1</td>
-        <td><strong>Chemical Rocket</strong></td>
-        <td class="mono">3.0 G</td>
-        <td class="mono">0.0001 c (~108,000 km/h)</td>
-        <td>Present-day technology. Practical only for short systemic hops.</td>
+        <td><strong>Chemical rocket</strong></td>
+        <td class="mono">0.01 – 3 g</td>
+        <td class="mono">1 – 30 km/s</td>
+        <td>What we fly today. Burns for minutes, then coasts.</td>
       </tr>
       <tr>
-        <td class="mono">2</td>
-        <td><strong>Ion / Plasma Core</strong></td>
-        <td class="mono">0.1 G</td>
-        <td class="mono">0.01 c (~10.7M km/h)</td>
-        <td>Low thrust, very high specific impulse. Long-burn efficiency. Good for asteroid belt travel.</td>
+        <td><strong>Ion drive</strong></td>
+        <td class="mono">0.001 – 0.1 g</td>
+        <td class="mono">up to 0.01 c</td>
+        <td>A gentle push that never stops. Very efficient, very slow to build up speed.</td>
       </tr>
       <tr>
-        <td class="mono">3</td>
-        <td><strong>Fusion Tokamak</strong></td>
-        <td class="mono">1.0 G</td>
-        <td class="mono">0.20 c (~215M km/h)</td>
-        <td>Near-future. 1G acceleration is comfortable for crew. Relativistic effects become notable.</td>
+        <td><strong>Fusion torch</strong></td>
+        <td class="mono">0.01 – 1 g</td>
+        <td class="mono">up to 0.2 c</td>
+        <td>Earth gravity for days on end. Hypothetical but plausible.</td>
       </tr>
       <tr>
-        <td class="mono">4</td>
-        <td><strong>Antimatter Rocket</strong></td>
-        <td class="mono">3.0 G</td>
-        <td class="mono">0.99 c</td>
-        <td>Strong time dilation. Ship time diverges significantly from Earth time. Practical for nearby stars.</td>
+        <td><strong>Antimatter rocket</strong></td>
+        <td class="mono">0.01 – 3 g</td>
+        <td class="mono">up to 0.999 c</td>
+        <td>Close enough to light speed for time to bend. At the limit the Lorentz factor is about 22.4.</td>
       </tr>
       <tr>
-        <td class="mono">5</td>
-        <td><strong>Alcubierre Warp</strong></td>
-        <td class="mono">N/A</td>
-        <td class="mono">Superluminal (×c)</td>
-        <td>Hypothetical metric distortion. No onboard acceleration. Warp Factor = multiples of <em>c</em>.</td>
+        <td><strong>Warp drive</strong></td>
+        <td class="mono">none</td>
+        <td class="mono">warp factor 1 – 50</td>
+        <td>Alcubierre bubble. Warp factor is a multiple of light speed. No time dilation.</td>
       </tr>
     </tbody>
   </table>
+  <p>Each sublight engine remembers its own acceleration and speed-limit settings while you try the others.</p>
 
-  <!-- ────────────────────────── KINEMATICS ──────────────────────────── -->
-  <h2 id="kinematics">Kinematic Configuration</h2>
-  <h3>Acceleration Profile (Sublight only)</h3>
-  <p>Sets the constant proper acceleration in multiples of Earth's surface gravity (<strong>G = 9.80665 m/s²</strong>). A value of <code>1.0 G</code> is comfortable for human passengers and is the baseline used in most hard sci-fi references. The slider range is clamped to the selected engine tier's maximum.</p>
+  <!-- ────────────────────────── TUNING ──────────────────────────────── -->
+  <h2 id="tuning">Tuning the Ship</h2>
+  <p>Below the engine cards are sliders for the selected engine. The <strong>Reset</strong> button returns them to the engine's defaults.</p>
 
-  <h3>Velocity Ceiling (Sublight only)</h3>
-  <p>The maximum speed the ship is permitted to reach, expressed as a fraction of the speed of light (<strong>c</strong>). For low-tier engines where the absolute speed is small, the display switches automatically to km/h for readability.</p>
+  <h3>Acceleration (sublight engines)</h3>
+  <p>How hard the engines push, in multiples of Earth's surface gravity (<strong>1 g = 9.80665 m/s²</strong>). It is the push the crew feel, so <code>1 g</code> feels like standing on Earth. The slider is logarithmic because ranges span up to a factor of 300, and a short plain-language note tells you what the value would feel like.</p>
+
+  <h3>Speed limit (sublight engines)</h3>
+  <p>The fastest the ship is allowed to go. Slow engines show it in km/s; fast ones show a fraction of the speed of light (<strong>c</strong>). For the antimatter rocket the slider is spaced by "nines" (0.9 c, 0.99 c, 0.999 c) so the relativistic end is easy to reach.</p>
 
   <div class="callout info">
-    <div class="callout-icon">ℹ️</div>
-    <div class="callout-body"><p><strong>Coasting Phase:</strong> If the ship reaches its velocity ceiling before the halfway point of the journey, it enters a constant-velocity coast phase. The engine then decelerates symmetrically for the second half. You can see this "trapezoidal" profile in the Velocity vs. Time chart.</p></div>
+    <div class="callout-body"><p><strong>Coasting:</strong> If the ship hits its speed limit before the halfway point, it stops accelerating and coasts at constant speed, then performs a mirror-image braking burn so it arrives at rest. If the limit is never reached, the ship flips at the midpoint and brakes straight away.</p></div>
   </div>
 
-  <h3>Warp Factor (Warp only)</h3>
-  <p>Sets the superluminal speed as a direct multiple of <em>c</em>. A Warp Factor of <code>10</code> means the ship traverses 10 light-years per year of coordinate time. Range is <code>1×</code> to <code>50×</code>.</p>
+  <h3>Warp factor (warp drive)</h3>
+  <p>For the warp drive the speed-limit slider is replaced by a warp factor from <code>1×</code> to <code>50×</code>. A factor of <code>10</code> means ten light-years covered per year on Earth.</p>
 
-  <h3>Hull Structural Mass</h3>
-  <p>The dry mass of the ship in metric tonnes (fuel and payload excluded). This affects the energy calculation. The slider is logarithmic — small adjustments near the low end have a large relative effect. A ship classification label is shown based on the mass:</p>
+  <h3>Ship mass</h3>
+  <p>How heavy the ship is. It does not change the travel time; it changes the energy the trip needs, shown in "In perspective". The slider is logarithmic, and a ship class label goes with the value:</p>
   <table>
     <thead><tr><th>Class</th><th>Mass Range</th></tr></thead>
     <tbody>
-      <tr><td><strong>Scout</strong></td><td>≤ 75 t</td></tr>
+      <tr><td><strong>Scout</strong></td><td>up to 75 t</td></tr>
       <tr><td><strong>Corvette</strong></td><td>76 – 5,000 t</td></tr>
       <tr><td><strong>Frigate</strong></td><td>5,001 – 10,000 t</td></tr>
       <tr><td><strong>Cruiser</strong></td><td>10,001 – 100,000 t</td></tr>
       <tr><td><strong>Carrier</strong></td><td>100,001 – 1,000,000 t</td></tr>
       <tr><td><strong>Battleship</strong></td><td>1,000,001 – 5,000,000 t</td></tr>
       <tr><td><strong>Dreadnought</strong></td><td>5,000,001 – 10,000,000 t</td></tr>
-      <tr><td><strong>Generation Ship</strong></td><td>&gt; 10,000,000 t</td></tr>
+      <tr><td><strong>Generation ship</strong></td><td>over 10,000,000 t</td></tr>
     </tbody>
   </table>
 
-  <!-- ────────────────────────── HEADER ──────────────────────────────── -->
-  <h2 id="header">Mission Header</h2>
-  <p>The header bar at the top of the dashboard provides a mission snapshot:</p>
+  <!-- ────────────────────────── ANSWER ──────────────────────────────── -->
+  <h2 id="answer">The Answer Panel</h2>
+  <p>The right-hand panel turns the numbers into something you can feel.</p>
+
+  <h3>Two clocks</h3>
+  <p>A <strong>You age</strong> clock shows how much time passes for the crew. An <strong>Earth ages</strong> clock shows how much passes for everyone back home. Each has a bar, so the gap is visible. For slow trips the two are almost equal; for fast ones they drift far apart. Under the clocks, one plain sentence states the difference in words.</p>
+
+  <h3>Three stat tiles</h3>
   <table>
-    <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+    <thead><tr><th>Tile</th><th>Meaning</th></tr></thead>
     <tbody>
-      <tr><td><strong>Departure (Origin)</strong></td><td>The fixed mission epoch — <code>2026-05-23 00:00:00 UTC</code>. All arrival times are calculated relative to this date.</td></tr>
-      <tr><td><strong>Peak Lorentz Factor (γ)</strong></td><td>The maximum time-dilation multiplier reached during the journey. At 1G acceleration, γ increases gradually. Near <em>c</em>, γ can exceed 7, meaning one year of ship time equals 7+ Earth years. For warp drive, γ is always <code>1.0</code> (no time dilation inside the bubble).</td></tr>
-      <tr><td><strong>Arrival (Earth Time)</strong></td><td>When an observer on Earth would calculate the ship arrives. Uses coordinate (external observer) time.</td></tr>
-      <tr><td><strong>Arrival (Ship Time)</strong></td><td>When the crew aboard the ship experiences arrival. Uses proper time. Will be earlier than Earth Time at relativistic speeds.</td></tr>
+      <tr><td><strong>Peak speed</strong></td><td>The fastest the ship goes, in km/s or as a fraction of light speed.</td></tr>
+      <tr><td><strong>Lorentz γ</strong></td><td>The time-dilation factor at peak speed. One year on the ship equals γ years on Earth at that moment. It is always 1 for warp.</td></tr>
+      <tr><td><strong>Distance</strong></td><td>The straight-line distance, in the unit that reads best (km, AU or light-years).</td></tr>
     </tbody>
   </table>
 
-  <!-- ────────────────────────── TELEMETRY ───────────────────────────── -->
-  <h2 id="telemetry">Telemetry HUD</h2>
-  <p>The right column displays the live computed output for the current mission profile.</p>
-  <table>
-    <thead><tr><th>Section</th><th>Fields</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><strong>Chronological Delta</strong></td>
-        <td><strong>Earth Time</strong> — total coordinate time from departure to arrival.<br/><strong>Ship Time</strong> — total proper time experienced by the crew.</td>
-      </tr>
-      <tr>
-        <td><strong>Kinematic Readouts</strong></td>
-        <td><strong>Distance</strong> — formatted automatically in km, AU, ly, or pc.<br/><strong>Peak Vel.</strong> — peak velocity in km/s or as a fraction of c.</td>
-      </tr>
-      <tr>
-        <td><strong>Power &amp; Logistics</strong></td>
-        <td><strong>Hull Mass</strong> — current ship mass in metric tonnes.<br/><strong>Energy</strong> — total propulsive energy in Exajoules (EJ). For sublight, this is the relativistic kinetic energy of the acceleration phase. For warp, it represents speculative reactor upkeep over the flight duration.</td>
-      </tr>
-      <tr>
-        <td><strong>Camera Controls</strong></td>
-        <td>Quick reference for 3D viewport interaction (see below).</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- ────────────────────────── CHARTS ──────────────────────────────── -->
-  <h2 id="charts">Flight Charts</h2>
-  <p>Two SVG charts are rendered in the lower centre column and update in real time:</p>
-  <h3>Velocity vs. Time</h3>
-  <p>Plots the ship's speed (as a fraction of <em>c</em>) over coordinate time. For <strong>sublight flights</strong>, this shows the triangular (flip-and-decelerate) or trapezoidal (with coasting phase) profile. For <strong>warp flights</strong>, the chart shows an instantaneous jump to the warp velocity and a flat line for the duration of travel.</p>
-
-  <h3>Position vs. Time</h3>
-  <p>Plots distance covered (in the active unit system) over coordinate time. For sublight, the curve is concave (slow at start, fast at peak) and symmetric. For warp, it's a straight diagonal line reflecting constant apparent velocity.</p>
-
-  <!-- ────────────────────────── VIEWPORT ────────────────────────────── -->
-  <h2 id="viewport">3D Viewport</h2>
-  <p>The centre column hosts an interactive WebGL star map rendered by Three.js. All objects in the active catalog are projected as a 3D point cloud.</p>
-  <h3>Visual Elements</h3>
+  <h3>In perspective</h3>
+  <p>Four comparisons put the trip in context:</p>
   <ul style="padding-left:20px; margin-bottom:16px;">
-    <li style="margin-bottom:8px;"><strong>Point cloud</strong> — all catalog bodies, coloured by type.</li>
-    <li style="margin-bottom:8px;"><strong>Origin sphere</strong> — the selected departure node, labelled.</li>
-    <li style="margin-bottom:8px;"><strong>Destination sphere</strong> — the selected arrival node, labelled.</li>
-    <li style="margin-bottom:8px;"><strong>Travel vector</strong> — a coloured line connecting Origin to Destination. Cyan for sublight; amber for warp.</li>
-    <li style="margin-bottom:8px;"><strong>Midpoint &amp; Deceleration markers</strong> — shown on sublight flights with a coasting phase, indicating the flip point and where deceleration begins.</li>
-    <li style="margin-bottom:8px;"><strong>Skybox</strong> — a Milky Way equirectangular panorama. Dimmed in Systemic mode for planet visibility; full intensity in Interstellar mode.</li>
+    <li style="margin-bottom:6px;"><strong>Light travel time</strong> — how long a beam of light takes to cover the same distance.</li>
+    <li style="margin-bottom:6px;"><strong>A real mission</strong> — a comparison with an actual spacecraft, or with Voyager 1 for longer trips.</li>
+    <li style="margin-bottom:6px;"><strong>Human scale</strong> — what the duration means in human terms, such as lifetimes.</li>
+    <li style="margin-bottom:6px;"><strong>Energy</strong> — the trip's energy compared with how much energy the whole world uses.</li>
   </ul>
-  <h3>Camera Controls</h3>
-  <div class="control-grid">
-    <div><kbd>Left Click</kbd> + Drag</div><div class="control-action">Orbit / Rotate the view</div>
-    <div><kbd>Right Click</kbd> + Drag</div><div class="control-action">Pan the camera</div>
-    <div>Scroll Wheel</div><div class="control-action">Zoom in / out</div>
-    <div><kbd>Double-Click</kbd> object</div><div class="control-action">Centre the view on that object</div>
-    <div><kbd>Esc</kbd> / Click empty space</div><div class="control-action">Reset the camera to default position</div>
+  <div class="callout warning">
+    <div class="callout-body"><p>The energy figure for a <strong>warp drive</strong> is a notional placeholder, not real physics. A real Alcubierre bubble would need exotic matter with negative energy density, and no one knows how much.</p></div>
   </div>
+
+  <!-- ────────────────────────── PLAYBACK ────────────────────────────── -->
+  <h2 id="playback">Playback and the Chart</h2>
+  <p>The bottom panel lets you watch the flight rather than just read about it.</p>
+
+  <h3>Controls</h3>
+  <ul style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;"><strong>Fly this flight</strong> — starts the flight from the beginning.</li>
+    <li style="margin-bottom:6px;"><strong>Famous flights</strong> — a row of one-click flights, from Apollo to the Moon to 1 g to Andromeda.</li>
+    <li style="margin-bottom:6px;"><strong>Play / pause</strong> — also bound to the <kbd>Space</kbd> bar.</li>
+    <li style="margin-bottom:6px;"><strong>Speed</strong> — playback runs from 0.5× to 4×.</li>
+  </ul>
+
+  <h3>Live readouts</h3>
+  <table>
+    <thead><tr><th>Readout</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ship clock</strong></td><td>Time elapsed aboard the ship.</td></tr>
+      <tr><td><strong>Earth clock</strong></td><td>Time elapsed on Earth.</td></tr>
+      <tr><td><strong>Speed now</strong></td><td>The ship's current speed.</td></tr>
+      <tr><td><strong>Still to go</strong></td><td>The distance remaining.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The speed chart</h3>
+  <p>The chart plots speed against time. A sublight flight rises, may level off if it reaches its speed limit (the coast), and falls again for the braking burn. A warp flight is a flat line, because the bubble moves at one steady speed.</p>
+  <p>The chart is also the <strong>scrubber</strong>: click or drag on it to jump to any moment in the flight. With the chart focused, the <kbd>←</kbd> and <kbd>→</kbd> arrow keys step through the flight.</p>
+
+  <h3>Even time or Stretch the burns</h3>
+  <p>The toggle under the chart changes the time axis.</p>
+  <ul style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;"><strong>Even time</strong> — every moment of the trip gets the same width. This is honest, but a burn of a few days vanishes inside a trip of decades.</li>
+    <li style="margin-bottom:6px;"><strong>Stretch the burns</strong> — uses a logarithmic time axis so the short acceleration and braking burns stay visible next to a very long coast.</li>
+  </ul>
+
+  <!-- ────────────────────────── MAP ─────────────────────────────────── -->
+  <h2 id="map">The Map</h2>
+  <p>The map fills the window behind the panels. Use the switch in the top bar to move between <strong>Solar system</strong> (planets and spacecraft, in AU) and <strong>Stars</strong> (stars, exoplanets and deep-sky objects, in light-years and beyond). Stars are drawn in their real colour and brightness.</p>
+
+  <h3>Moving around</h3>
+  <div class="control-grid">
+    <div><strong>Drag</strong></div><div class="control-action">Rotate the view</div>
+    <div><strong>Right-drag</strong> or two fingers</div><div class="control-action">Pan</div>
+    <div><strong>Scroll</strong> or pinch</div><div class="control-action">Zoom in and out</div>
+    <div><strong>Hover</strong></div><div class="control-action">See an object's name</div>
+    <div><strong>Click</strong> an object</div><div class="control-action">Open its card, with <strong>Fly here</strong> and <strong>Start here</strong></div>
+    <div><strong>Double-click</strong> an object</div><div class="control-action">Centre the view on it</div>
+    <div><kbd>Esc</kbd></div><div class="control-action">Clear the selection, or re-frame the flight</div>
+  </div>
+  <p>A <strong>scale bar</strong> shows how big the current view is. At the bottom right, zoom buttons and a <strong>frame the flight</strong> button put the whole route back in view.</p>
+
+  <h3>Object cards</h3>
+  <p>Clicking an object opens a small card about it. <strong>Fly here</strong> makes it the destination, and <strong>Start here</strong> makes it the origin, so you can plan a flight entirely from the map.</p>
+
+  <h3>During playback</h3>
+  <p>A <strong>ship marker</strong> travels along the path. On sublight flights a <strong>flip marker</strong> shows the point where the ship turns around to brake.</p>
+
+  <h3>Layers</h3>
+  <p>The <strong>Layers</strong> menu in the top bar switches map details on and off:</p>
+  <ul style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;"><strong>Object names</strong> — labels next to objects.</li>
+    <li style="margin-bottom:6px;"><strong>Exoplanets</strong> — planets known to orbit other stars.</li>
+    <li style="margin-bottom:6px;"><strong>Orbits</strong> — the orbit lines of solar-system bodies.</li>
+    <li style="margin-bottom:6px;"><strong>Milky Way backdrop</strong> — the panorama behind the stars.</li>
+  </ul>
+
+  <!-- ────────────────────────── SHARING ─────────────────────────────── -->
+  <h2 id="sharing">Sharing a Flight</h2>
+  <p>Press <strong>Share this flight</strong> in the top bar. The app copies a link and briefly shows <strong>Link copied</strong>. The whole flight (places, engine and settings) lives in the page address, so anyone who opens the link sees exactly the same plan. You can also bookmark the address or copy it from the browser's address bar.</p>
+
+  <!-- ────────────────────────── PHONES ──────────────────────────────── -->
+  <h2 id="phones">Phones and Tablets</h2>
+  <p>On a phone or tablet the map fills the screen and the panels move into a <strong>bottom sheet</strong>. Drag the handle at the top of the sheet up for more room or down to see more map. Three tabs switch what the sheet shows:</p>
+  <ul style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;"><strong>Plan</strong> — pickers, engines and sliders.</li>
+    <li style="margin-bottom:6px;"><strong>Answer</strong> — the clocks, stat tiles and comparisons.</li>
+    <li style="margin-bottom:6px;"><strong>Flight</strong> — playback, readouts and the speed chart.</li>
+  </ul>
+  <p>Pinch to zoom the map and drag with two fingers to pan.</p>
+
+  <!-- ────────────────────────── SHORTCUTS ───────────────────────────── -->
+  <h2 id="shortcuts">Keyboard Shortcuts</h2>
+  <div class="control-grid">
+    <div><kbd>Space</kbd></div><div class="control-action">Play or pause the flight</div>
+    <div><kbd>[</kbd></div><div class="control-action">Collapse or reopen the Flight plan panel</div>
+    <div><kbd>]</kbd></div><div class="control-action">Collapse or reopen the answer panel</div>
+    <div><kbd>Esc</kbd></div><div class="control-action">Clear the map selection, or re-frame the flight</div>
+    <div><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></div><div class="control-action">Move through and choose search results in a picker</div>
+    <div><kbd>←</kbd> <kbd>→</kbd></div><div class="control-action">Step through the flight when the chart scrubber is focused</div>
+  </div>
+
+  <!-- ────────────────────────── ACCESSIBILITY ───────────────────── -->
+  <h2 id="accessibility">Accessibility</h2>
+  <p>Controls can be reached and used with the keyboard, and the main controls carry text labels for screen readers. If your device is set to <strong>reduce motion</strong>, the app honours that setting and tones down animation. The chart scrubber has arrow-key control, so playback position never depends on a mouse.</p>
 
   <!-- ────────────────────────── RELATIVITY ──────────────────────────── -->
   <h2 id="relativity">Relativistic Travel Explained</h2>
-  <p>At high velocities, time passes <em>more slowly</em> for a moving observer than for a stationary one. This effect — <strong>time dilation</strong> — is given by the Lorentz factor:</p>
+  <p>At high speed, time passes <em>more slowly</em> for a moving observer than for a stationary one. This <strong>time dilation</strong> is governed by the Lorentz factor:</p>
   <div class="card" style="font-family:'JetBrains Mono',monospace; font-size:0.92rem; letter-spacing:0.02em; margin-bottom:20px;">
     γ = 1 / √(1 − v²/c²)
   </div>
-  <p>The engine uses the constant-proper-acceleration equations of special relativity. "Proper acceleration" means the acceleration felt by the crew (what a scale would measure onboard). For an acceleration of <code>a</code> over coordinate distance <code>x</code>:</p>
+  <p>The engine uses constant-proper-acceleration equations. "Proper acceleration" is the acceleration the crew feel, the kind a scale on board would measure. For an acceleration <code>a</code> over a distance <code>x</code> (starting from rest):</p>
   <ul style="padding-left:20px; margin-bottom:14px;">
-    <li style="margin-bottom:6px;"><strong>Coordinate time</strong> (Earth observer): <code>t = (c/a) × √( (1 + ax/c²)² − 1 )</code></li>
-    <li style="margin-bottom:6px;"><strong>Proper time</strong> (ship crew): <code>τ = (c/a) × acosh(1 + ax/c²)</code></li>
+    <li style="margin-bottom:6px;"><strong>Earth time</strong>: <code>t = (c/a) × √( (1 + ax/c²)² − 1 )</code></li>
+    <li style="margin-bottom:6px;"><strong>Ship time</strong>: <code>τ = (c/a) × acosh(1 + ax/c²)</code></li>
   </ul>
+  <p>A real trip has two halves: accelerate, then brake. The engine computes one half and mirrors it. If the speed limit is reached first, a coasting stretch is added in the middle.</p>
+
+  <!-- ────────────────────────── EXAMPLE ─────────────────────────────── -->
+  <h2 id="example">Worked Example: Two Clocks Drift Apart</h2>
+  <p>Choose <strong>Sol</strong> to <strong>Proxima Centauri</strong> (4.2465 light-years), the antimatter rocket, and 1 g. This is the "Sol to Proxima Centauri" famous flight.</p>
+  <ul style="padding-left:20px; margin-bottom:14px;">
+    <li style="margin-bottom:6px;">The ship never reaches the 0.999 c speed limit. It speeds up for the first half, flips at the midpoint at about <strong>0.95 c</strong> (γ about 3.2), and brakes for the second half.</li>
+    <li style="margin-bottom:6px;">About <strong>5.9 years</strong> pass on Earth.</li>
+    <li style="margin-bottom:6px;">About <strong>3.5 years</strong> pass on the ship.</li>
+  </ul>
+  <p>Now stretch the distance. At 1 g to the Andromeda galaxy with the 0.999 c speed limit, the ship spends most of the trip coasting at the limit (γ about 22.4). That takes about <strong>2.54 million years</strong> on Earth but only about <strong>114,000 years</strong> on the ship. Run it yourself with the "1 g to Andromeda" famous flight and watch the two clocks.</p>
   <div class="callout info">
-    <div class="callout-icon">ℹ️</div>
-    <div class="callout-body">
-      <p><strong>Example:</strong> At a continuous 1G acceleration, a trip to Proxima Centauri (4.24 ly) takes about <strong>3.5 years</strong> of ship time but <strong>5.9 years</strong> of Earth time. The crew ages less than the people they left behind.</p>
-    </div>
+    <div class="callout-body"><p>Time dilation is not about the ship feeling anything odd. Aboard, life goes on normally at 1 g. The difference only shows when the two clocks are compared at the end.</p></div>
   </div>
-  <p>At very high Lorentz factors (e.g., Antimatter tier, 0.99c), γ ≈ 7. A 50-year Earth journey takes only ~7 ship years. The crew would return to an Earth 50 years older, having aged only 7 years.</p>
 
   <!-- ────────────────────────── WARP ─────────────────────────────────── -->
   <h2 id="warp">Warp Drive Physics</h2>
-  <p>The Alcubierre warp metric (1994) is a theoretical solution to the Einstein field equations. The ship does not move through space — instead, the metric (the fabric of spacetime) contracts ahead of the ship and expands behind it. Within the warp bubble, the interior remains flat Minkowski spacetime:</p>
+  <p>The Alcubierre warp metric (1994) is a theoretical solution to Einstein's equations. The ship does not outrun light through space. Instead, space itself contracts ahead of the ship and expands behind it. Inside the bubble the ship sits in flat space-time:</p>
   <ul style="padding-left:20px; margin-bottom:14px;">
-    <li style="margin-bottom:6px;"><strong>No onboard acceleration</strong> — the crew experience weightlessness.</li>
-    <li style="margin-bottom:6px;"><strong>Lorentz factor = 1</strong> — there is no time dilation. Ship time equals coordinate time.</li>
-    <li style="margin-bottom:6px;"><strong>Apparent velocity</strong> is a direct multiple of <em>c</em> (Warp Factor × c).</li>
+    <li style="margin-bottom:6px;"><strong>No felt acceleration</strong> — the crew float weightlessly.</li>
+    <li style="margin-bottom:6px;"><strong>Lorentz factor = 1</strong> — no time dilation. Ship time and Earth time are equal.</li>
+    <li style="margin-bottom:6px;"><strong>Apparent speed</strong> is the warp factor times <em>c</em>, in a straight line (a linear model).</li>
   </ul>
   <div class="callout warning">
-    <div class="callout-icon">⚠️</div>
-    <div class="callout-body"><p>The energy model for warp in this simulator is <strong>speculative</strong>. The real Alcubierre metric would require exotic matter with negative energy density. The Exajoule output shown is an arbitrary reactor-upkeep model and is not physically derived.</p></div>
+    <div class="callout-body"><p>A real Alcubierre bubble needs exotic matter with negative energy density, which is not known to exist. The warp energy shown in the app is a <strong>notional placeholder</strong> built on an arbitrary reactor constant. It is not derived from physics.</p></div>
   </div>
 
   <!-- ────────────────────────── CATALOGS ────────────────────────────── -->
   <h2 id="catalogs">Data Catalogs</h2>
-  <h3>Systemic Catalog</h3>
-  <p>Generated from the <strong>JPL Horizons</strong> ephemeris service. Each body has its actual 3D Cartesian position (in AU, centred on Sol) sampled across a range spanning its orbital period. The orbit path is stored as a sequence of positions for 3D rendering. Included bodies: Sol, 8 planets, Moon, 5 dwarf planets, and 8 asteroids.</p>
+  <h3>Solar System</h3>
+  <p>Generated from the <strong>JPL Horizons</strong> ephemeris service. Each body has its real 3D position in AU, centred on the Sun, and an orbit path for drawing. The set includes the Sun, the eight planets, the Moon, dwarf planets, asteroids and spacecraft.</p>
 
-  <h3>Interstellar Catalog</h3>
+  <h3>Stars and beyond</h3>
   <p>A merged dataset from three sources:</p>
   <ol style="padding-left:20px; margin-bottom:14px;">
-    <li style="margin-bottom:6px;"><strong>HYG Database v3.6</strong> — over 119,000 stars from the Henry Draper, Yale, and Hipparcos catalogs, filtered to those with proper names or Bayer designations bright enough to be of interest (mag &lt; 5.0 or proper-named). 3D positions in parsecs relative to Sol.</li>
-    <li style="margin-bottom:6px;"><strong>NASA Exoplanet Archive</strong> — confirmed exoplanets within 100 parsecs, retrieved via the TAP SQL service. Includes mass estimates where known.</li>
-    <li style="margin-bottom:6px;"><strong>Curated anchors</strong> — Messier objects and notable spacecraft waypoints with hand-written narratives.</li>
+    <li style="margin-bottom:6px;"><strong>HYG Database v3.6</strong> — stars from the Henry Draper, Yale Bright Star and Hipparcos catalogs, filtered to named stars and bright ones. 3D positions in parsecs relative to the Sun.</li>
+    <li style="margin-bottom:6px;"><strong>NASA Exoplanet Archive</strong> — confirmed exoplanets within 100 parsecs, retrieved through the archive's TAP service.</li>
+    <li style="margin-bottom:6px;"><strong>Curated anchors</strong> — Messier objects (nebulae, clusters, galaxies), Sagittarius A*, and spacecraft such as Voyager 1 and 2, with short descriptions.</li>
   </ol>
 
   <!-- ────────────────────────── GLOSSARY ────────────────────────────── -->
@@ -665,17 +712,16 @@
   <table>
     <thead><tr><th>Term</th><th>Definition</th></tr></thead>
     <tbody>
-      <tr><td><strong>Proper Time (τ)</strong></td><td>Time as experienced by the traveller aboard the ship. Always ≤ coordinate time at relativistic speeds.</td></tr>
-      <tr><td><strong>Coordinate Time (t)</strong></td><td>Time measured by a stationary observer (e.g., on Earth). The "clock on the wall" perspective.</td></tr>
-      <tr><td><strong>Lorentz Factor (γ)</strong></td><td>The ratio of coordinate time to proper time. At 0.99c, γ ≈ 7.09. At 0.9999c, γ ≈ 70.7.</td></tr>
-      <tr><td><strong>Proper Acceleration</strong></td><td>The acceleration felt inside the ship (what a scale measures). Distinct from coordinate acceleration at relativistic speeds.</td></tr>
-      <tr><td><strong>Flip-and-Decelerate</strong></td><td>The standard deep-space manoeuvre: accelerate for the first half of the journey, flip 180°, decelerate for the second half, arriving with near-zero velocity.</td></tr>
-      <tr><td><strong>Coasting Phase</strong></td><td>When the ship reaches its velocity ceiling before the halfway point, it coasts at constant speed until it must begin decelerating.</td></tr>
-      <tr><td><strong>Alcubierre Metric</strong></td><td>A solution to the Einstein field equations describing a "warp bubble" that permits apparent faster-than-light travel without local violations of relativity.</td></tr>
-      <tr><td><strong>AU</strong></td><td>Astronomical Unit. The average Earth–Sun distance. 1 AU ≈ 149.6 million km.</td></tr>
-      <tr><td><strong>Parsec (pc)</strong></td><td>1 parsec = 3.26 light-years = 3.086 × 10¹⁶ metres. Standard unit of stellar distance.</td></tr>
-      <tr><td><strong>Light-year (ly)</strong></td><td>The distance light travels in one year ≈ 9.461 × 10¹⁵ metres.</td></tr>
-      <tr><td><strong>Exajoule (EJ)</strong></td><td>10¹⁸ joules. For reference: the entire world's annual energy consumption is approximately 580 EJ.</td></tr>
+      <tr><td><strong>Proper Time (τ)</strong></td><td>Time as experienced by the traveller aboard the ship (the "You age" clock). At relativistic speeds it is shorter than Earth time.</td></tr>
+      <tr><td><strong>Coordinate Time (t)</strong></td><td>Time measured by a stationary observer, such as someone on Earth (the "Earth ages" clock).</td></tr>
+      <tr><td><strong>Lorentz Factor (γ)</strong></td><td>The ratio of Earth time to ship time at a given speed. At 0.99 c, γ is about 7.09. At 0.999 c, γ is about 22.4.</td></tr>
+      <tr><td><strong>Proper Acceleration</strong></td><td>The acceleration felt inside the ship, what a scale on board would read.</td></tr>
+      <tr><td><strong>Flip and brake</strong></td><td>The standard deep-space manoeuvre: accelerate, turn the ship around, then decelerate to arrive at rest.</td></tr>
+      <tr><td><strong>Coast</strong></td><td>A stretch at constant speed in the middle of the flight, used when the ship reaches its speed limit before the halfway point.</td></tr>
+      <tr><td><strong>Alcubierre Metric</strong></td><td>A solution to Einstein's equations describing a "warp bubble" that allows apparent faster-than-light travel without breaking relativity locally.</td></tr>
+      <tr><td><strong>AU</strong></td><td>Astronomical Unit, the average Earth–Sun distance. 1 AU is about 149.6 million km.</td></tr>
+      <tr><td><strong>Parsec (pc)</strong></td><td>3.26 light-years, or 3.086 × 10¹⁶ metres. A standard unit of stellar distance.</td></tr>
+      <tr><td><strong>Light-year (ly)</strong></td><td>The distance light travels in one year, about 9.461 × 10¹⁵ metres.</td></tr>
     </tbody>
   </table>
 
@@ -685,14 +731,13 @@
     <thead><tr><th>Quantity</th><th>Unit Displayed</th><th>SI Equivalent</th></tr></thead>
     <tbody>
       <tr><td>Distance (small)</td><td>km</td><td>10³ m</td></tr>
-      <tr><td>Distance (systemic)</td><td>AU</td><td>1.496 × 10¹¹ m</td></tr>
+      <tr><td>Distance (solar system)</td><td>AU</td><td>1.496 × 10¹¹ m</td></tr>
       <tr><td>Distance (interstellar)</td><td>ly / pc</td><td>9.461 × 10¹⁵ m / 3.086 × 10¹⁶ m</td></tr>
-      <tr><td>Velocity (low)</td><td>km/s</td><td>10³ m/s</td></tr>
-      <tr><td>Velocity (relativistic)</td><td>fraction of c</td><td>c = 299,792,458 m/s</td></tr>
-      <tr><td>Acceleration</td><td>G</td><td>9.80665 m/s²</td></tr>
+      <tr><td>Speed (slow)</td><td>km/s</td><td>10³ m/s</td></tr>
+      <tr><td>Speed (fast)</td><td>fraction of c</td><td>c = 299,792,458 m/s</td></tr>
+      <tr><td>Acceleration</td><td>g</td><td>9.80665 m/s²</td></tr>
       <tr><td>Mass</td><td>tonnes</td><td>10³ kg</td></tr>
-      <tr><td>Energy</td><td>EJ (Exajoules)</td><td>10¹⁸ J</td></tr>
-      <tr><td>Time</td><td>y / d / h / m / s</td><td>—</td></tr>
+      <tr><td>Time</td><td>years, days, hours and smaller</td><td>—</td></tr>
     </tbody>
   </table>
 

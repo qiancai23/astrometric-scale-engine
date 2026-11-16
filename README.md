@@ -4,10 +4,10 @@
 Active
 
 ## Last touched
-2026-09-27 via Claude Code (VS Code)
+2026-11-15 via Claude Code (VS Code)
 
 ## Deploy target
-none
+https://astro.brucedgates.com/ (Cloudflare)
 
 ## Notes
-Next up: 3D Astrometric Map fixes (dot sizes etc.). See Prompt.txt and LOG.md.
+The redesign (full-window map, floating panels, flight playback, shareable links) is built in the working tree but not yet committed or deployed. Next: look at it on a real screen and phone, then commit and deploy. See HANDOFF.md.
