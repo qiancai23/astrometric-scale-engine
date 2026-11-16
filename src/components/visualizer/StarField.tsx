@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useFlightStore } from '../../state/useFlightStore';
@@ -45,6 +45,7 @@ function makeMaterial(): THREE.ShaderMaterial {
 export const StarField: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
   const gl = useThree((s) => s.gl);
   const data = runtime.data;
+  const uploaded = useRef(-1);
 
   const field = useMemo(() => {
     const points = new THREE.Points(makeGeometry(data.field), makeMaterial());
@@ -76,6 +77,12 @@ export const StarField: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
     const reduced = prefersReducedMotion();
     const dpr = gl.getPixelRatio();
     const layers = useFlightStore.getState().layers;
+
+    // Solar-system bodies move with the date: re-upload the point positions when they change.
+    if (uploaded.current !== data.posVersion) {
+      uploaded.current = data.posVersion;
+      (field.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+    }
 
     const fm = field.material as THREE.ShaderMaterial;
     fm.uniforms.uTime.value = state.clock.elapsedTime;

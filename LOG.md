@@ -277,3 +277,37 @@ All five interface agents were stopped by the account's usage limit before writi
 * Files changed: `.gitignore`, `LOG.md`, `HANDOFF.md`.
 * Later the same round: Bruce said "Push" and "keep the cap at 0.999 for now". Pushed `47e0201` to `origin/main` (triggers Cloudflare deployment; result not checked). No sixth unlimited engine. HANDOFF.md updated to match.
 * Confirmed the live site serves the new design (page title changed about 4 minutes after the push).
+
+## 2026-11-16 — Round 1: plan for date-based, orbit-aware solar-system flights (no code changed)
+* Bruce asked why Earth to Mars by chemical rocket shows 1 month 6 days when real missions take 4 to 9 months, and asked for a plan, a design and a size estimate for making the solar-system map accurate and date-dependent.
+* Findings:
+  * The 36.9 days is exactly 0.638 AU (the stored Earth to Mars distance) divided by 30 km/s (the chemical rocket's default speed limit). The model is a straight line between two motionless points, with no Sun's gravity and no orbital motion.
+  * `scripts/build_data.py` stores each body's position as the first sample of its orbit line, which starts half an orbital period before 2024. So the bodies are frozen at different dates: Earth, Moon and Mars at 2023-01-01 (three weeks after a close approach of Mars), Jupiter at 2018-01-01, Saturn in 2009, Neptune in 1941, Pluto in 1900.
+  * The chemical rocket's implied fuel use (speed up to 30 km/s, then stop: 60 km/s of velocity change) is about ten times what a real chemical mission has after reaching low Earth orbit.
+* Plan proposed (four stages, details in HANDOFF.md): (1) positions from orbital elements for any date, a departure date in the store and page address, planets move on the map; (2) real coasting orbits for the chemical rocket via a Lambert solver, a fuel budget instead of a speed limit, curved path and playback, fast engines aim at the destination's future position; (3) launch-window chart; (4) optional single gravity assist.
+* Decision pending from Bruce: which stages to build. Recommended: stages 1 to 3, gravity assists later.
+* Files changed: `LOG.md`, `HANDOFF.md`.
+
+## 2026-11-16 — Round 2: built date-based, orbit-aware solar-system flights (uncommitted)
+* Bruce approved the first three stages of the plan (dated positions, real chemical-rocket orbits, launch-window chart), deferred gravity assists, asked for smaller models as helpers, and asked for the ion drive to be fixed.
+* Decisions and why:
+  * Positions from orbital elements computed in the browser, not a library or network call: one small module covers all 27 bodies and any date. Small-body elements fetched once from the JPL Small-Body Database (`scripts/build_elements.py`).
+  * The chemical rocket's tuning is a fuel budget (km/s of velocity change, from low orbit to a loose capture orbit), default 6. Its planner returns the launch that arrives soonest within the budget on or after the chosen date. First version used "earliest launch date that fits"; changed because it could pick a slow trip today when a short wait arrives earlier.
+  * Over-budget flights are still shown, flagged, with the cheapest launch found, so the panels always have a flight to show.
+  * Ion drive: acceleration cut to 0.000001 to 0.0001 g (default 0.00001 g, like NASA's Dawn) on both maps; on the solar-system map it flies a low-thrust spiral (Edelbaum approximation) with a wait for the planets to line up.
+  * Fast engines keep the straight-line model, aimed at the destination's position on arrival. Flights touching the Sun use it for every engine (a Lambert transfer to the Sun's centre does not exist).
+  * `kinematicsEngine.ts` untouched; new models sit beside it behind the existing `FlightProfile` interface, extended with an optional `trajectory`.
+* Helpers: one Sonnet agent built the flight-plan "When" section and sliders; one Sonnet agent did the answer panel wording, comparisons and user guide; one Opus agent built the launch-window chart and speed-chart changes and was cut off by the account usage limit before finishing or reporting.
+* Verified: type-check clean, 178 Jest tests pass, production build succeeds, headless Edge screenshots at 1440 and 390 px with no console errors or overflow. Real-mission checks pass (Perseverance, New Horizons launch speeds within 1%).
+* Known defect left: overlapping vertical-axis labels on the speed chart for orbit and spiral flights. Several controls not yet clicked through (listed in HANDOFF.md).
+* Not committed or pushed: Bruce has not asked, and a push deploys the live site.
+* Files: see `UPDATES_2026-11-16_07-32-23.md` for the full list. New: `src/physics/{ephemeris,lambert,transfer,flightPlanner}.ts` and tests, `src/state/systemicFlights.test.ts`, `src/components/visualizer/flightGeometry.ts`, `src/components/plan/WhenSection.tsx`, `src/components/playback/LaunchWindowChart.tsx`, `scripts/build_elements.py`, `scripts/elements.json`. Changed: store, engines, famous flights, types, URL state, format, flight profile, most of `src/components/visualizer/`, plan, answer and playback panels and their stylesheets, `public/help.html`, `CLAUDE.md`, `HANDOFF.md`.
+
+## 2026-11-16 — Round 3: review and click-through of the date-based flights (uncommitted)
+* Bruce said: keep the default fuel budget (6 km/s) and the default journey (Earth to Mars by fusion torch), and continue the build.
+* Reviewed the playback panel work left by the helper agent that was cut off (`LaunchWindowChart.tsx`, `SpeedChart.tsx`, `PlaybackPanel.tsx`, `Readouts.tsx`, `playback.css`) and clicked through every control the last round listed as untried, in headless Edge at 1440 and 390 px. All of them work; no console errors.
+* The overlapping speed-chart labels reported last round were already fixed in the code. Changed the labels anyway, from "33.6 km/s" and "Baseline 15.6 km/s, not zero" to "Fastest 33.6 km/s" and "Slowest 20.8 km/s": the baseline figure was a by-product of the drawing and could come out as the contradictory "Baseline 0 km/s, not zero".
+* Fixed: the speed tag beside the ship on the map had lost its pill styling (text was written over the styled element; also wrong on the live site) and could cover the origin label; the over-budget warning called a hand-picked flight "the cheapest launch found"; the phone sheet at full height slid under the "Solar system / Stars" switch.
+* Verified: type-check clean, 178 Jest tests pass, production build succeeds.
+* Not committed or pushed: Bruce has not asked, and a push deploys the live site.
+* Files changed: `src/components/playback/SpeedChart.tsx`, `src/styles/playback.css`, `src/components/visualizer/OverlayDriver.tsx`, `src/components/plan/WhenSection.tsx`, `src/components/shell/BottomSheet.tsx`, `CLAUDE.md`, `HANDOFF.md`, `LOG.md`, `session_creation_log`. New: `UPDATES_2026-11-16_11-42-42.md`.

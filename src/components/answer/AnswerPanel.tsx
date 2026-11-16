@@ -7,8 +7,12 @@ import { usePulse } from '../../lib/motion';
 import {
   formatAccel,
   formatCount,
+  formatDate,
+  formatDeltaV,
   formatDistance,
+  formatDuration,
   formatDurationLong,
+  SECONDS_IN_DAY,
   formatGamma,
   formatSpeed,
   formatWarpFactor,
@@ -81,6 +85,7 @@ export const AnswerPanel: React.FC<PanelProps> = ({ compact }) => {
   const accelerationG = useFlightStore((s) => s.accelerationG);
   const warpFactor = useFlightStore((s) => s.warpFactor);
   const energy = useFlightStore((s) => selectResult(s)?.energyExajoules ?? 0);
+  const plan = useFlightStore((s) => s.plan);
   const flightRevision = useFlightStore((s) => s.flightRevision);
   const arrivalCount = useFlightStore((s) => s.arrivalCount);
 
@@ -90,6 +95,8 @@ export const AnswerPanel: React.FC<PanelProps> = ({ compact }) => {
 
   const originName = origin ? nameOf(origin) : '';
   const destinationName = destination ? nameOf(destination) : '';
+
+  const curved = plan !== null && plan.model !== 'direct';
 
   const rows = useMemo(
     () =>
@@ -103,9 +110,10 @@ export const AnswerPanel: React.FC<PanelProps> = ({ compact }) => {
             regime,
             originName,
             destinationName,
+            curvedPath: curved,
           })
         : [],
-    [profile, distanceMeters, energy, drive, regime, originName, destinationName],
+    [profile, distanceMeters, energy, drive, regime, originName, destinationName, curved],
   );
 
   const summary = profile
@@ -125,9 +133,26 @@ export const AnswerPanel: React.FC<PanelProps> = ({ compact }) => {
   }
 
   const title =
-    drive === 'Warp'
-      ? `${originName} to ${destinationName} at ${formatWarpFactor(warpFactor)}`
-      : `${originName} to ${destinationName} at ${accelText(accelerationG)}`;
+    plan && (plan.model === 'ballistic' || plan.model === 'lunar')
+      ? `${originName} to ${destinationName} by chemical rocket`
+      : plan && plan.model === 'spiral'
+        ? `${originName} to ${destinationName} by ion drive`
+        : drive === 'Warp'
+          ? `${originName} to ${destinationName} at ${formatWarpFactor(warpFactor)}`
+          : `${originName} to ${destinationName} at ${accelText(accelerationG)}`;
+
+  /* ----- dates, and the fuel warning ----- */
+  let dateLine: string | null = null;
+  if (plan) {
+    dateLine = `Leaves ${formatDate(plan.launchDay)} · arrives ${formatDate(plan.arrivalDay)}`;
+    if (plan.waitDays >= 1) {
+      dateLine += `, after waiting ${formatDuration(plan.waitDays * SECONDS_IN_DAY)} ${plan.model === 'spiral' ? 'for the planets to line up' : 'for a launch window'}`;
+    }
+  }
+  const short =
+    plan && !plan.feasible && plan.dvNeededKms !== null && plan.dvBudgetKms !== null
+      ? `This flight needs ${formatDeltaV(plan.dvNeededKms)} of velocity change, but the engine carries ${formatDeltaV(plan.dvBudgetKms)}.`
+      : null;
 
   /* ----- the one-line meaning ----- */
   let sentence: React.ReactNode;
@@ -149,7 +174,11 @@ export const AnswerPanel: React.FC<PanelProps> = ({ compact }) => {
     sentence = (
       <>
         Too slow for relativity to matter: your clock ends up <strong>{gapText}</strong> behind.{' '}
-        {regime === 'Interstellar' ? 'Try a faster engine to see the clocks split.' : 'Try a star to see the clocks split.'}
+        {regime === 'Interstellar'
+          ? 'Try a faster engine to see the clocks split.'
+          : curved
+            ? 'Try the antimatter rocket, or a star, to see the clocks split.'
+            : 'Try a star to see the clocks split.'}
       </>
     );
   }
@@ -178,7 +207,14 @@ export const AnswerPanel: React.FC<PanelProps> = ({ compact }) => {
       <header className="answer-head enter" style={{ ['--i' as string]: 0 }}>
         <div className="micro-label">The answer</div>
         <h2 className="answer-title">{title}</h2>
+        {dateLine && <p className="answer-dates">{dateLine}</p>}
       </header>
+
+      {short && (
+        <p className="answer-warning enter" style={{ ['--i' as string]: 1 }} role="note">
+          {short}
+        </p>
+      )}
 
       <div className={`answer-arrival${arrivedShown ? ' is-on' : ''}`} aria-hidden="true">
         <div className="answer-arrival-inner">
@@ -195,16 +231,32 @@ export const AnswerPanel: React.FC<PanelProps> = ({ compact }) => {
       </div>
 
       <div className="answer-tiles">
-        <Tile index={4} label="Peak speed" value={profile.peakVelocity} format={formatSpeed} log />
         <Tile
-          index={5}
-          label="Lorentz γ"
-          value={drive === 'Warp' ? 1 : profile.peakGamma}
-          format={formatGamma}
-          quiet={drive === 'Warp'}
-          sub={drive === 'Warp' ? 'none' : undefined}
+          index={4}
+          label={!curved ? 'Peak speed' : plan?.model === 'lunar' ? 'Top speed round Earth' : 'Top speed round the Sun'}
+          value={profile.peakVelocity}
+          format={formatSpeed}
+          log
         />
-        <Tile index={6} label="Distance" value={distanceMeters} format={formatDistance} log />
+        {curved && plan && plan.dvNeededKms !== null ? (
+          <Tile
+            index={5}
+            label="Fuel needed"
+            value={plan.dvNeededKms}
+            format={formatDeltaV}
+            sub={plan.dvBudgetKms !== null ? `of ${formatDeltaV(plan.dvBudgetKms)}` : undefined}
+          />
+        ) : (
+          <Tile
+            index={5}
+            label="Lorentz γ"
+            value={drive === 'Warp' ? 1 : profile.peakGamma}
+            format={formatGamma}
+            quiet={drive === 'Warp'}
+            sub={drive === 'Warp' ? 'none' : undefined}
+          />
+        )}
+        <Tile index={6} label={curved ? 'Path flown' : 'Distance'} value={distanceMeters} format={formatDistance} log />
       </div>
       {gloss && (
         <p className="answer-gloss enter" style={{ ['--i' as string]: 7 }}>

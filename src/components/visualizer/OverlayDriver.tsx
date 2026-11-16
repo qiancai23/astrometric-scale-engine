@@ -8,7 +8,7 @@ import { useIsCompact } from '../../lib/motion';
 import { LabelPool, LABEL_GAP, LABEL_HEIGHT, labelWidth } from './labels';
 import { metersPerUnit } from './sceneData';
 import { pxPerUnit, scaleBarFor, SafeRect } from './mapMath';
-import { shipFraction } from './FlightPath';
+import { shipParam } from './flightGeometry';
 import type { MapRuntime } from './mapRuntime';
 
 /* ------------------------------------------------------------------ */
@@ -119,6 +119,8 @@ const inside = (rect: SafeRect, l: number, t: number, r: number, b: number, m: n
 const endpointLabelWidth = (tag: string, name: string): number => labelWidth(tag) + 20 + labelWidth(name);
 
 const viewProj = new THREE.Matrix4();
+const pathVec = new THREE.Vector3();
+const AU_METERS = 1.495978707e11;
 
 /**
  * Runs once per frame after the camera: projects every object to the screen, picks the object
@@ -298,30 +300,18 @@ export const OverlayDriver: React.FC<{ runtime: MapRuntime }> = ({ runtime }) =>
 
     /* ---- 4. Flight markers, ship and its speed tag ---- */
     const profile = s.profile;
-    const haveRoute = oi >= 0 && di >= 0 && !!profile && profile.distance > 0;
-    // Unit screen direction of the route and a normal pointing up the screen.
-    let ux = 1;
-    let uy = 0;
-    if (haveRoute && front[oi] && front[di]) {
-      const ddx = sx[di] - sx[oi];
-      const ddy = sy[di] - sy[oi];
-      const len = Math.sqrt(ddx * ddx + ddy * ddy);
-      if (len > 0.5) {
-        ux = ddx / len;
-        uy = ddy / len;
-      }
-    }
-    let nx = -uy;
-    let ny = ux;
-    if (ny > 0) {
-      nx = -nx;
-      ny = -ny;
-    }
+    const haveRoute = oi >= 0 && di >= 0 && !!profile && profile.distance > 0 && runtime.path.count >= 2;
+    // The path is a straight line on the star map and for fast engines; a curve for orbits and spirals.
+    const curved = !!profile?.trajectory && profile.trajectory.kind !== 'direct';
     const lerpScreen = (f: number, out: { x: number; y: number; ok: boolean }) => {
-      // Project the world point along the route (perspective-correct).
-      const x = pos[oi * 3] + (pos[di * 3] - pos[oi * 3]) * f;
-      const y = pos[oi * 3 + 1] + (pos[di * 3 + 1] - pos[oi * 3 + 1]) * f;
-      const z = pos[oi * 3 + 2] + (pos[di * 3 + 2] - pos[oi * 3 + 2]) * f;
+      // Project the world point a fraction f along the path (perspective-correct).
+      if (!runtime.pathPoint(f, pathVec)) {
+        out.ok = false;
+        return;
+      }
+      const x = pathVec.x;
+      const y = pathVec.y;
+      const z = pathVec.z;
       const cx = e[0] * x + e[4] * y + e[8] * z + e[12];
       const cy = e[1] * x + e[5] * y + e[9] * z + e[13];
       const cw = e[3] * x + e[7] * y + e[11] * z + e[15];
@@ -330,6 +320,30 @@ export const OverlayDriver: React.FC<{ runtime: MapRuntime }> = ({ runtime }) =>
       out.x = ((cx / w) * 0.5 + 0.5) * W;
       out.y = (0.5 - (cy / w) * 0.5) * H;
     };
+    // Unit screen direction of the path between two of its fractions, and a normal pointing up the screen.
+    let ux = 1;
+    let uy = 0;
+    let nx = 0;
+    let ny = -1;
+    const aim = (f0: number, f1: number): void => {
+      lerpScreen(f0, posOut);
+      const ax = posOut.x;
+      const ay = posOut.y;
+      const aOk = posOut.ok;
+      lerpScreen(f1, posOut);
+      const len = Math.hypot(posOut.x - ax, posOut.y - ay);
+      if (aOk && posOut.ok && len > 0.5) {
+        ux = (posOut.x - ax) / len;
+        uy = (posOut.y - ay) / len;
+      }
+      nx = -uy;
+      ny = ux;
+      if (ny > 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+    };
+    if (haveRoute) aim(0, 1);
     const nearEnd = (x: number, y: number): boolean => {
       const m = 18 + ringR;
       if (oVis && Math.abs(x - sx[oi]) < m && Math.abs(y - sy[oi]) < m && Math.hypot(x - sx[oi], y - sy[oi]) < m) return true;
@@ -375,7 +389,8 @@ export const OverlayDriver: React.FC<{ runtime: MapRuntime }> = ({ runtime }) =>
     let fb = -1;
     let ta = '';
     let tb = '';
-    if (haveRoute && profile && profile.drive === 'Sublight') {
+    // Flip and coast markers belong to the constant-thrust model; an orbit or spiral has none.
+    if (haveRoute && profile && profile.drive === 'Sublight' && !curved) {
       if (!profile.hasCoast) {
         fa = 0.5;
         ta = 'FLIP · turn and brake';
@@ -387,11 +402,22 @@ export const OverlayDriver: React.FC<{ runtime: MapRuntime }> = ({ runtime }) =>
         tb = 'BRAKE';
       }
     }
+    // An orbit or spiral starts where the origin was at launch and ends where the destination
+    // will be on arrival. Mark both ends, since the bodies themselves move on (the markers hide
+    // while a body is still at its end of the path).
+    if (haveRoute && curved) {
+      fa = 0;
+      fb = 1;
+      ta = `LAUNCH · ${oName} was here`;
+      tb = `ARRIVAL · ${dName} will be here`;
+    }
     placeMarker(dom.markerA, dom.markerALabel, fa, ta);
     placeMarker(dom.markerB, dom.markerBLabel, fb, tb);
 
-    const ship = shipFraction(s);
+    const ship = shipParam(s);
     if (ship >= 0 && haveRoute) {
+      // On a curve the ship points along the path where it is, not along the whole route.
+      if (curved) aim(Math.max(ship - 0.01, 0), Math.min(ship + 0.01, 1));
       lerpScreen(ship, posOut);
       const vis = posOut.ok && posOut.x > -30 && posOut.x < W + 30 && posOut.y > -30 && posOut.y < H + 30;
       place(dom.ship, posOut.x, posOut.y, vis);
@@ -408,13 +434,28 @@ export const OverlayDriver: React.FC<{ runtime: MapRuntime }> = ({ runtime }) =>
         const text = formatSpeed(profile.atFraction(s.progress).v);
         if (text !== st.speedText) {
           st.speedText = text;
-          setText(dom.shipTag, text);
+          // The pill is the anchor's child; writing to the anchor itself would delete it.
+          setText((dom.shipTag?.firstElementChild as HTMLElement | null) ?? null, text);
         }
-        // Marker labels sit above the line, so the speed tag goes below it.
-        const tx = posOut.x - nx * 36;
-        const ty = posOut.y - ny * 36;
-        place(dom.shipTag, tx, ty, true);
+        // Marker labels sit above the line, so the speed tag goes below it, unless a label is
+        // already there (the origin can keep pace with the ship on a slow orbit).
+        // Try below, above, then further out on each side; the first free spot wins. The tag's
+        // box hangs above its anchor point, so the spots above the line are shifted down by its height.
         const w = labelWidth(text) + 12;
+        let tx = posOut.x - nx * 36;
+        let ty = posOut.y - ny * 36;
+        for (let k = 0; k < 4; k++) {
+          const side = k % 2 === 0 ? 1 : -1;
+          const dist = k < 2 ? 36 : 60;
+          const cx = posOut.x - nx * dist * side;
+          const cy = posOut.y - ny * dist * side + (side < 0 ? 20 : 0);
+          if (!rects.hits(cx - w / 2, cy - 20, cx + w / 2, cy, 2)) {
+            tx = cx;
+            ty = cy;
+            break;
+          }
+        }
+        place(dom.shipTag, tx, ty, true);
         rects.add(tx - w / 2, ty - 20, tx + w / 2, ty);
       } else place(dom.shipTag, 0, 0, false);
     } else {
@@ -433,7 +474,12 @@ export const OverlayDriver: React.FC<{ runtime: MapRuntime }> = ({ runtime }) =>
         const r = Math.max(9, runtime.radiusPx[hIdx] + 5);
         if (dom.hoverRing) dom.hoverRing.style.setProperty('--ring-size', `${Math.round(r * 2)}px`);
         setText(dom.hoverName, entry.name);
-        const dist = entry.distanceFromSolMeters > 0 ? ` · ${formatDistance(entry.distanceFromSolMeters)} from the Sun` : '';
+        // On the solar-system map the distance from the Sun changes with the date.
+        const fromSol =
+          runtime.regime === 'Systemic'
+            ? Math.hypot(pos[hIdx * 3], pos[hIdx * 3 + 1], pos[hIdx * 3 + 2]) * AU_METERS
+            : entry.distanceFromSolMeters;
+        const dist = fromSol > 0 ? ` · ${formatDistance(fromSol)} from the Sun` : '';
         setText(dom.hoverMeta, `${entry.kindLabel}${dist}`);
         // Restart the ring's grow-in.
         dom.hoverRing?.classList.remove('is-pop');

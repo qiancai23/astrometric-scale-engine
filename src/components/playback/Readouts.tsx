@@ -1,12 +1,16 @@
 import React from 'react';
 import { useFlightStore } from '../../state/useFlightStore';
-import { formatDuration, formatSpeed, formatDistance } from '../../lib/format';
+import { formatDate, formatDuration, formatSpeed, formatDistance } from '../../lib/format';
 import { usePulse } from '../../lib/motion';
 import type { FlightPhase } from '../../physics/flightProfile';
 
-/** The four live readouts. Leaf component: the only one (with the chart cursor) that follows `progress`. */
+/**
+ * The live readouts (four, plus the calendar date on the solar-system map). Leaf component: the
+ * only one (with the chart cursor) that follows `progress`.
+ */
 export const Readouts: React.FC = () => {
   const profile = useFlightStore((s) => s.profile);
+  const launchDay = useFlightStore((s) => (s.regime === 'Systemic' && s.plan ? s.plan.launchDay : null));
   const progress = useFlightStore((s) => s.progress);
   const arrivalCount = useFlightStore((s) => s.arrivalCount);
   const flash = usePulse(arrivalCount, 1100);
@@ -18,9 +22,12 @@ export const Readouts: React.FC = () => {
     { label: 'Speed now', value: sample ? formatSpeed(sample.v) : '–' },
     { label: 'Still to go', value: sample ? formatDistance(sample.remaining) : '–' },
   ];
+  if (launchDay !== null) {
+    items.push({ label: 'Date', value: sample ? formatDate(launchDay + sample.t / 86400) : formatDate(launchDay) });
+  }
 
   return (
-    <dl className="playback-readouts">
+    <dl className={`playback-readouts${launchDay !== null ? ' has-date' : ''}`}>
       {items.map((it, i) => (
         <div key={it.label} className="playback-readout enter" style={{ '--i': i } as React.CSSProperties}>
           <dt>{it.label}</dt>
@@ -42,6 +49,8 @@ export const PHASE_LABEL: Record<FlightPhase | 'ready', string> = {
   coast: 'Coasting, engines off',
   decel: 'Slowing down',
   warp: 'Inside the warp bubble',
+  orbit: 'Coasting on an orbit, engines off',
+  spiral: 'Thrusting along a slow spiral',
   arrived: 'Arrived',
 };
 

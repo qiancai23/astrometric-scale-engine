@@ -51,6 +51,14 @@ export interface FlightSpec {
   w?: number;
   /** Ship mass in tonnes. */
   m?: number;
+  /** Solar-system flights: earliest launch date, YYYY-MM-DD. */
+  date?: string;
+  /** Solar-system flights by chemical rocket or ion drive: fuel budget, km/s of velocity change. */
+  dv?: number;
+  /** Chemical rocket: `flyby` to pass the destination without braking. Default: enter orbit. */
+  arr?: 'orbit' | 'flyby';
+  /** Chemical rocket: fly exactly this many days from the launch date (a flight picked on the launch-window chart). */
+  tof?: number;
 }
 
 /** Map layers the visitor can switch on and off. */

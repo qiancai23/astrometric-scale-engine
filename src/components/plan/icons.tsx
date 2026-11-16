@@ -37,3 +37,10 @@ export const SearchIcon: React.FC = () => (
     <path d="m20 20-4.2-4.2" />
   </svg>
 );
+
+/** Chevron for stepping a date back (left) or forward (right). */
+export const ChevronIcon: React.FC<{ dir: 'left' | 'right' }> = ({ dir }) => (
+  <svg {...base} width={16} height={16}>
+    <path d={dir === 'left' ? 'm14.5 6-6 6 6 6' : 'm9.5 6 6 6-6 6'} />
+  </svg>
+);

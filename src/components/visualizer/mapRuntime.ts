@@ -38,6 +38,9 @@ export interface OverlayElements {
   scaleLabel: HTMLSpanElement | null;
 }
 
+/** Most points a flight path can have. */
+export const MAX_PATH_POINTS = 512;
+
 /** A token color that glides to its new value when the drive changes. */
 export class LerpColor {
   readonly value = new THREE.Vector3(1, 1, 1);
@@ -100,6 +103,34 @@ export class MapRuntime {
 
   /** performance.now() when the last arrival burst started (0 = none). */
   burstStart = 0;
+
+  /** Day number the solar-system map is showing (eases toward the flight's date). NaN before the first frame. */
+  shownDay = NaN;
+
+  /**
+   * The flight path as a polyline in scene coordinates, refreshed every frame (see
+   * `flightGeometry.ts`). Two points for a straight flight, a few hundred for an orbit or spiral.
+   */
+  readonly path = { count: 0, points: new Float32Array(3 * MAX_PATH_POINTS), screenLength: 1000 };
+
+  /**
+   * The point a fraction `u` (0..1) of the way along the path's points, written into `out`.
+   * Returns false when there is no path.
+   */
+  pathPoint(u: number, out: THREE.Vector3): boolean {
+    const { count, points } = this.path;
+    if (count < 2) return false;
+    const x = Math.min(Math.max(u, 0), 1) * (count - 1);
+    const k = Math.min(Math.floor(x), count - 2);
+    const w = x - k;
+    const a = k * 3;
+    out.set(
+      points[a] + (points[a + 3] - points[a]) * w,
+      points[a + 1] + (points[a + 4] - points[a + 1]) * w,
+      points[a + 2] + (points[a + 5] - points[a + 2]) * w,
+    );
+    return true;
+  }
 
   readonly colors = {
     accent: new LerpColor(),

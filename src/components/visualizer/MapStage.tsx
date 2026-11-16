@@ -11,6 +11,7 @@ import { SolarSystem } from './SolarSystem';
 import { FlightPath } from './FlightPath';
 import { OverlayDriver, pickAt } from './OverlayDriver';
 import { MapOverlays } from './MapOverlays';
+import { stepMapDay } from './flightGeometry';
 import '../../styles/map.css';
 
 /** Everything inside the WebGL canvas. */
@@ -20,7 +21,12 @@ const MapScene: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
   const tokens = useSceneTokens();
   useEffect(() => runtime.applyTokens(tokens), [runtime, tokens]);
   // Token colors glide to their new values (cyan to amber) before anything else draws.
-  useFrame((_, delta) => runtime.stepColors(Math.min(delta, 0.1), prefersReducedMotion()), -2);
+  // The same early step moves the solar-system bodies to the date the map is showing.
+  useFrame((_, delta) => {
+    const dt = Math.min(delta, 0.1);
+    runtime.stepColors(dt, prefersReducedMotion());
+    stepMapDay(runtime, useFlightStore.getState(), dt);
+  }, -2);
 
   return (
     <>

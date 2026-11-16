@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { KinematicsEngine, SublightResult, WarpResult, SPEED_OF_LIGHT } from '../physics/kinematicsEngine';
 import { buildSublightProfile, buildWarpProfile, FlightProfile } from '../physics/flightProfile';
+import { FlightPlan, canPlanSystemic, compareSystemic, planSystemic } from '../physics/flightPlanner';
+import { MAX_DAY, MIN_DAY, dayFromIso, isoFromDay, todayDay } from '../physics/ephemeris';
+import type { ArrivalMode } from '../physics/transfer';
 import { findBySlug, getEntry, CatalogEntry } from '../data/catalog';
 import {
   GRAVITY,
@@ -31,6 +34,8 @@ import type {
 
 export type { AstroObject, AstrometricRegime, DriveCore, EngineId, FlightSpec, MapLayers, Endpoint } from '../types';
 export { GRAVITY } from '../data/engines';
+export type { FlightPlan } from '../physics/flightPlanner';
+export type { ArrivalMode } from '../physics/transfer';
 
 export const PARSEC_TO_METERS = 3.085677581e16;
 export const LIGHTYEAR_TO_METERS = 9.4607304725808e15;
@@ -67,16 +72,40 @@ export interface FlightState {
   accelerationG: number;
   /** Speed limit of the selected sublight engine, as a fraction of light speed. */
   speedCapC: number;
+  /**
+   * Fuel budget of the selected engine in km/s of velocity change. Used by the chemical rocket
+   * and the ion drive on the solar-system map; 0 for the other engines.
+   */
+  deltaVKms: number;
   /** Warp factor (multiples of light speed). */
   warpFactor: number;
-  /** Tuned acceleration and speed limit remembered per sublight engine. */
+  /** Tuned acceleration, speed limit and fuel budget remembered per sublight engine. */
   engineSettings: EngineSettings;
+
+  /* ----- when (solar-system map only) ----- */
+  /**
+   * Earliest launch date, as a whole day number (days since 2000-01-01 12:00 UT; see
+   * `src/physics/ephemeris.ts`). The actual launch can be later: see `plan.launchDay`.
+   */
+  departureDay: number;
+  /** Chemical rocket: brake into orbit at the destination, or fly past it. */
+  arrivalMode: ArrivalMode;
+  /**
+   * Chemical rocket: when set, fly exactly this many days starting on `departureDay` (a flight
+   * picked on the launch-window chart) instead of the soonest arrival the budget allows.
+   */
+  pinnedTofDays: number | null;
 
   /* ----- derived results (recomputed on every change) ----- */
   sublightResult: SublightResult | null;
   warpResult: WarpResult | null;
   /** Moment-by-moment model of the current flight, or null when there is no route. */
   profile: FlightProfile | null;
+  /**
+   * Solar-system map: when the flight launches and arrives, which model it uses and what fuel it
+   * needs. Null on the star map and when there is no route.
+   */
+  plan: FlightPlan | null;
   /** Travel time of all five engines for the current route, slowest tier first. */
   comparison: EngineComparison[];
   /** Goes up by one whenever anything about the flight changes. */
@@ -116,7 +145,15 @@ export interface FlightState {
   /** Legacy low-level setters (no cross-map handling). Prefer `setEndpoint`. */
   setOrigin: (obj: AstroObject | null) => void;
   setDestination: (obj: AstroObject | null) => void;
-  setShipParams: (params: Partial<Pick<FlightState, 'mass' | 'accelerationG' | 'speedCapC' | 'warpFactor'>>) => void;
+  setShipParams: (params: Partial<Pick<FlightState, 'mass' | 'accelerationG' | 'speedCapC' | 'deltaVKms' | 'warpFactor'>>) => void;
+
+  /** Set the earliest launch date (day number). Drops any flight pinned on the launch-window chart. */
+  setDepartureDay: (day: number) => void;
+  setArrivalMode: (mode: ArrivalMode) => void;
+  /** Fly exactly this launch date and travel time (picked on the launch-window chart). */
+  pinFlight: (day: number, tofDays: number) => void;
+  /** Go back to the soonest arrival the fuel budget allows. */
+  clearPin: () => void;
 
   /** Select an engine. Restores that engine's remembered acceleration and speed limit. */
   setEngine: (id: EngineId) => void;
@@ -172,6 +209,7 @@ const calculateDistanceMeters = (origin: AstroObject | null, destination: AstroO
 interface FlightInputs {
   regime: AstrometricRegime;
   driveCore: DriveCore;
+  engineId: EngineId;
   origin: AstroObject | null;
   destination: AstroObject | null;
   mass: number;
@@ -179,6 +217,9 @@ interface FlightInputs {
   speedCapC: number;
   warpFactor: number;
   engineSettings: EngineSettings;
+  departureDay: number;
+  arrivalMode: ArrivalMode;
+  pinnedTofDays: number | null;
 }
 
 interface FlightDerived {
@@ -186,11 +227,29 @@ interface FlightDerived {
   sublightResult: SublightResult | null;
   warpResult: WarpResult | null;
   profile: FlightProfile | null;
+  plan: FlightPlan | null;
   comparison: EngineComparison[];
 }
 
 /** Everything that follows from the inputs. The only place physics is run for the active flight. */
 const derive = (s: FlightInputs): FlightDerived => {
+  // Solar-system map: positions depend on the date and each engine has its own flight model.
+  if (s.regime === 'Systemic' && s.origin && s.destination && canPlanSystemic(s.origin.name, s.destination.name)) {
+    const input = {
+      origin: s.origin.name,
+      dest: s.destination.name,
+      engineId: s.driveCore === 'Warp' ? ('warp' as EngineId) : s.engineId,
+      settings: s.engineSettings,
+      warpFactor: s.warpFactor,
+      mass: s.mass,
+      departureDay: s.departureDay,
+      arrivalMode: s.arrivalMode,
+      pinnedTofDays: s.pinnedTofDays,
+    };
+    const flight = planSystemic(input);
+    return { ...flight, comparison: compareSystemic(input) };
+  }
+
   const distanceMeters = calculateDistanceMeters(s.origin, s.destination, s.regime);
   let sublightResult: SublightResult | null = null;
   let warpResult: WarpResult | null = null;
@@ -213,7 +272,7 @@ const derive = (s: FlightInputs): FlightDerived => {
   }
 
   const comparison = compareEngines(distanceMeters, s.mass, s.engineSettings, s.warpFactor);
-  return { distanceMeters, sublightResult, warpResult, profile, comparison };
+  return { distanceMeters, sublightResult, warpResult, profile, plan: null, comparison };
 };
 
 const mapName = (regime: AstrometricRegime): string => (regime === 'Interstellar' ? 'star map' : 'solar-system map');
@@ -229,7 +288,7 @@ const resolveRoute = (spec: Pick<FlightSpec, 'from' | 'to'>): { from: CatalogEnt
 };
 
 /** The inputs a flight spec describes, or null if its places cannot be found. */
-const inputsFromSpec = (spec: FlightSpec, base: { engineSettings: EngineSettings; mass: number; warpFactor: number }) => {
+const inputsFromSpec = (spec: FlightSpec, base: { engineSettings: EngineSettings; mass: number; warpFactor: number; departureDay: number }) => {
   const route = resolveRoute(spec);
   if (!route) return null;
   const engineId: EngineId = isEngineId(spec.engine) ? spec.engine : 'fusion';
@@ -243,8 +302,12 @@ const inputsFromSpec = (spec: FlightSpec, base: { engineSettings: EngineSettings
     engineSettings[engineId] = clampSublightSettings(engineId, {
       accelerationG: spec.a ?? current.accelerationG,
       speedCapC: spec.v ?? current.speedCapC,
+      deltaVKms: spec.dv ?? current.deltaVKms,
     });
   }
+  const specDay = spec.date ? dayFromIso(spec.date) : null;
+  const departureDay = clamp(specDay ?? base.departureDay, MIN_DAY, MAX_DAY);
+  const pinnedTofDays = engineId === 'chemical' && spec.tof !== undefined && spec.tof > 0 ? spec.tof : null;
   const mass = spec.m !== undefined ? clamp(spec.m * 1000, MIN_MASS_KG, MAX_MASS_KG) : base.mass;
   const active: SublightEngineId = engineId === 'warp' ? 'fusion' : engineId;
   return {
@@ -256,13 +319,20 @@ const inputsFromSpec = (spec: FlightSpec, base: { engineSettings: EngineSettings
     engineSettings,
     accelerationG: engineSettings[active].accelerationG,
     speedCapC: engineSettings[active].speedCapC,
+    deltaVKms: engineId === 'warp' ? 0 : engineSettings[active].deltaVKms,
     warpFactor,
     mass,
+    departureDay,
+    arrivalMode: (spec.arr === 'flyby' ? 'flyby' : 'orbit') as ArrivalMode,
+    pinnedTofDays,
   };
 };
 
 /** The shareable description of the current flight, or null when there is no route. */
-export const specFromState = (s: Pick<FlightState, 'origin' | 'destination' | 'engineId' | 'accelerationG' | 'speedCapC' | 'warpFactor' | 'mass'>): FlightSpec | null => {
+export const specFromState = (
+  s: Pick<FlightState, 'origin' | 'destination' | 'engineId' | 'accelerationG' | 'speedCapC' | 'warpFactor' | 'mass'> &
+    Partial<Pick<FlightState, 'regime' | 'deltaVKms' | 'departureDay' | 'arrivalMode' | 'pinnedTofDays'>>,
+): FlightSpec | null => {
   if (!s.origin || !s.destination) return null;
   const from = getEntry(s.origin.id);
   const to = getEntry(s.destination.id);
@@ -272,6 +342,15 @@ export const specFromState = (s: Pick<FlightState, 'origin' | 'destination' | 'e
   else {
     spec.a = s.accelerationG;
     spec.v = s.speedCapC;
+  }
+  if (s.regime === 'Systemic' && s.departureDay !== undefined) {
+    spec.date = isoFromDay(s.departureDay);
+    const orbital = s.engineId === 'chemical' || s.engineId === 'ion';
+    if (orbital && s.deltaVKms) spec.dv = s.deltaVKms;
+    if (s.engineId === 'chemical') {
+      if (s.arrivalMode === 'flyby') spec.arr = 'flyby';
+      if (s.pinnedTofDays) spec.tof = s.pinnedTofDays;
+    }
   }
   return spec;
 };
@@ -284,7 +363,7 @@ export const selectResult = (s: FlightState): SublightResult | WarpResult | null
 /* Initial state: a flight from the page address, else the default.    */
 /* ------------------------------------------------------------------ */
 
-const initialBase = { engineSettings: defaultEngineSettings(), mass: DEFAULT_MASS_KG, warpFactor: 10 };
+const initialBase = { engineSettings: defaultEngineSettings(), mass: DEFAULT_MASS_KG, warpFactor: 10, departureDay: todayDay() };
 
 const sharedSpec = typeof window !== 'undefined' ? parseFlightSpec(window.location.search) : null;
 /** True when the page was opened from a link that carries a flight. */
@@ -301,8 +380,12 @@ const initialInputs =
     engineSettings: initialBase.engineSettings,
     accelerationG: 1,
     speedCapC: 0.2,
+    deltaVKms: 0,
     warpFactor: 10,
     mass: DEFAULT_MASS_KG,
+    departureDay: initialBase.departureDay,
+    arrivalMode: 'orbit' as ArrivalMode,
+    pinnedTofDays: null,
   };
 
 let nonce = 0;
@@ -340,22 +423,22 @@ export const useFlightStore = create<FlightState>((set, get) => ({
 
   setRegime: (regime) =>
     set((state) => {
-      const next = { ...state, regime, origin: null, destination: null };
-      return { regime, origin: null, destination: null, selectedId: null, hoveredId: null, beaconId: null, ...derive(next), ...flightChanged(state, true) };
+      const next = { ...state, regime, origin: null, destination: null, pinnedTofDays: null };
+      return { regime, origin: null, destination: null, pinnedTofDays: null, selectedId: null, hoveredId: null, beaconId: null, ...derive(next), ...flightChanged(state, true) };
     }),
 
   setDriveCore: (driveCore) =>
     set((state) => {
       const engineId: EngineId = driveCore === 'Warp' ? 'warp' : state.engineId === 'warp' ? 'fusion' : state.engineId;
-      const next = { ...state, driveCore, engineId };
-      return { driveCore, engineId, ...derive(next), ...flightChanged(state, false) };
+      const next = { ...state, driveCore, engineId, pinnedTofDays: null };
+      return { driveCore, engineId, pinnedTofDays: null, ...derive(next), ...flightChanged(state, false) };
     }),
 
   setOrigin: (origin) =>
-    set((state) => ({ origin, ...derive({ ...state, origin }), ...flightChanged(state, true) })),
+    set((state) => ({ origin, pinnedTofDays: null, ...derive({ ...state, origin, pinnedTofDays: null }), ...flightChanged(state, true) })),
 
   setDestination: (destination) =>
-    set((state) => ({ destination, ...derive({ ...state, destination }), ...flightChanged(state, true) })),
+    set((state) => ({ destination, pinnedTofDays: null, ...derive({ ...state, destination, pinnedTofDays: null }), ...flightChanged(state, true) })),
 
   setShipParams: (params) =>
     set((state) => {
@@ -365,14 +448,16 @@ export const useFlightStore = create<FlightState>((set, get) => ({
       if (params.warpFactor !== undefined && Number.isFinite(params.warpFactor) && warp.drive === 'Warp') {
         patch.warpFactor = clamp(params.warpFactor, warp.minFactor, warp.maxFactor);
       }
-      if (params.accelerationG !== undefined || params.speedCapC !== undefined) {
+      if (params.accelerationG !== undefined || params.speedCapC !== undefined || params.deltaVKms !== undefined) {
         const active: SublightEngineId = state.engineId === 'warp' ? 'fusion' : state.engineId;
         const tuned = clampSublightSettings(active, {
           accelerationG: params.accelerationG ?? state.accelerationG,
           speedCapC: params.speedCapC ?? state.speedCapC,
+          deltaVKms: params.deltaVKms ?? state.engineSettings[active].deltaVKms,
         });
         patch.accelerationG = tuned.accelerationG;
         patch.speedCapC = tuned.speedCapC;
+        if (state.engineId !== 'warp') patch.deltaVKms = tuned.deltaVKms;
         patch.engineSettings = { ...state.engineSettings, [active]: tuned };
       }
       const next = { ...state, ...patch };
@@ -384,11 +469,12 @@ export const useFlightStore = create<FlightState>((set, get) => ({
   setEngine: (engineId) =>
     set((state) => {
       if (engineId === state.engineId) return {};
-      const patch: Partial<FlightState> = { engineId, driveCore: engineId === 'warp' ? 'Warp' : 'Sublight' };
+      const patch: Partial<FlightState> = { engineId, driveCore: engineId === 'warp' ? 'Warp' : 'Sublight', pinnedTofDays: null, deltaVKms: 0 };
       if (engineId !== 'warp') {
         const tuned = clampSublightSettings(engineId, state.engineSettings[engineId]);
         patch.accelerationG = tuned.accelerationG;
         patch.speedCapC = tuned.speedCapC;
+        patch.deltaVKms = tuned.deltaVKms;
       }
       const next = { ...state, ...patch };
       return { ...patch, ...derive(next), ...flightChanged(state, false) };
@@ -413,8 +499,8 @@ export const useFlightStore = create<FlightState>((set, get) => ({
         return;
       }
       set((s) => {
-        const next = { ...s, [which]: entry.obj };
-        return { [which]: entry.obj, picker: null, selectedId: null, ...derive(next), ...flightChanged(s, true) } as Partial<FlightState>;
+        const next = { ...s, [which]: entry.obj, pinnedTofDays: null };
+        return { [which]: entry.obj, pinnedTofDays: null, picker: null, selectedId: null, ...derive(next), ...flightChanged(s, true) } as Partial<FlightState>;
       });
       return;
     }
@@ -438,6 +524,7 @@ export const useFlightStore = create<FlightState>((set, get) => ({
         regime,
         origin: which === 'origin' ? entry.obj : chosenOther.obj,
         destination: which === 'destination' ? entry.obj : chosenOther.obj,
+        pinnedTofDays: null,
       };
       const next = { ...s, ...patch };
       const keptOther = counterpart && chosenOther.id === counterpart.id;
@@ -460,7 +547,7 @@ export const useFlightStore = create<FlightState>((set, get) => ({
   swapEndpoints: () =>
     set((state) => {
       if (!state.origin || !state.destination) return {};
-      const patch = { origin: state.destination, destination: state.origin };
+      const patch = { origin: state.destination, destination: state.origin, pinnedTofDays: null };
       return { ...patch, ...derive({ ...state, ...patch }), ...flightChanged(state, true) };
     }),
 
@@ -471,7 +558,7 @@ export const useFlightStore = create<FlightState>((set, get) => ({
     const from = findBySlug(defaults.from, regime);
     const to = findBySlug(defaults.to, regime);
     set((s) => {
-      const patch = { regime, origin: from?.obj ?? null, destination: to?.obj ?? null };
+      const patch = { regime, origin: from?.obj ?? null, destination: to?.obj ?? null, pinnedTofDays: null };
       return { ...patch, selectedId: null, hoveredId: null, beaconId: null, picker: null, ...derive({ ...s, ...patch }), ...flightChanged(s, true) };
     });
   },
@@ -480,7 +567,12 @@ export const useFlightStore = create<FlightState>((set, get) => ({
     const state = get();
     // A loaded flight starts every engine from its defaults, so the side-by-side engine
     // comparison is fair and not skewed by tuning left over from an earlier flight.
-    const inputs = inputsFromSpec(spec, { engineSettings: defaultEngineSettings(), mass: state.mass, warpFactor: state.warpFactor });
+    const inputs = inputsFromSpec(spec, {
+      engineSettings: defaultEngineSettings(),
+      mass: state.mass,
+      warpFactor: state.warpFactor,
+      departureDay: state.departureDay,
+    });
     if (!inputs) return false;
     set((s) => ({
       ...inputs,
@@ -493,6 +585,36 @@ export const useFlightStore = create<FlightState>((set, get) => ({
     }));
     return true;
   },
+
+  /* ----- when ----- */
+
+  setDepartureDay: (day) =>
+    set((state) => {
+      if (!Number.isFinite(day)) return {};
+      const departureDay = clamp(Math.round(day), MIN_DAY, MAX_DAY);
+      if (departureDay === state.departureDay && state.pinnedTofDays === null) return {};
+      const patch = { departureDay, pinnedTofDays: null };
+      return { ...patch, ...derive({ ...state, ...patch }), ...flightChanged(state, false) };
+    }),
+
+  setArrivalMode: (arrivalMode) =>
+    set((state) => {
+      if (arrivalMode === state.arrivalMode) return {};
+      return { arrivalMode, ...derive({ ...state, arrivalMode }), ...flightChanged(state, false) };
+    }),
+
+  pinFlight: (day, tofDays) =>
+    set((state) => {
+      if (!Number.isFinite(day) || !(tofDays > 0)) return {};
+      const patch = { departureDay: clamp(Math.round(day), MIN_DAY, MAX_DAY), pinnedTofDays: tofDays };
+      return { ...patch, ...derive({ ...state, ...patch }), ...flightChanged(state, false) };
+    }),
+
+  clearPin: () =>
+    set((state) => {
+      if (state.pinnedTofDays === null) return {};
+      return { pinnedTofDays: null, ...derive({ ...state, pinnedTofDays: null }), ...flightChanged(state, false) };
+    }),
 
   /* ----- playback ----- */
 

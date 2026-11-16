@@ -100,18 +100,20 @@ void main() {
 /* ------------------------------------------------------------------ */
 
 export const pathVertex = /* glsl */ `
-uniform vec3 uA;
-uniform vec3 uB;
+// One quad per path segment: position is the segment's start, segEnd its end, and segT the
+// fraction of the whole path at each of the two.
 uniform vec2 uResolution;
 uniform float uWidth;
 uniform float uNear;
+attribute vec3 segEnd;
+attribute vec2 segT;
 attribute float along;
 attribute float side;
 varying float vT;
 varying float vSide;
 void main() {
-  vec4 a = modelViewMatrix * vec4(uA, 1.0);
-  vec4 b = modelViewMatrix * vec4(uB, 1.0);
+  vec4 a = modelViewMatrix * vec4(position, 1.0);
+  vec4 b = modelViewMatrix * vec4(segEnd, 1.0);
   float nearZ = -uNear * 1.001;
   float ta = 0.0;
   float tb = 1.0;
@@ -142,7 +144,7 @@ void main() {
   vec4 c = along < 0.5 ? ca : cb;
   c.xy += n * side * uWidth * 0.5 / hres * c.w;
   gl_Position = c;
-  vT = mix(ta, tb, along);
+  vT = mix(segT.x, segT.y, mix(ta, tb, along));
   vSide = side;
 }
 `;

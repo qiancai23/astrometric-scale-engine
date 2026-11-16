@@ -7,6 +7,8 @@ import { getEntry } from '../../data/catalog';
 import { easeInOutCubic, prefersReducedMotion } from '../../lib/motion';
 import { distanceToFit, framingDiameter } from './mapMath';
 import { MapRuntime, readInsets } from './mapRuntime';
+import { flightBounds } from './flightGeometry';
+import { indexByName } from './sceneData';
 import type { AstrometricRegime } from '../../types';
 
 type Controls = React.ElementRef<typeof OrbitControls>;
@@ -90,6 +92,11 @@ export const CameraRig: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
     autoSpeed: 0,
     near: 0,
     far: 0,
+    flightRev: -1,
+    framedDist: 0,
+    framedTarget: new THREE.Vector3(),
+    anchor: -1,
+    anchorPos: new THREE.Vector3(),
   });
 
   // Esc clears the selection first, otherwise re-frames the flight.
@@ -117,26 +124,22 @@ export const CameraRig: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
 
   /** Where the camera should be to frame the whole flight: target, direction and distance. */
   const flightFrame = (s: FlightState, outTarget: THREE.Vector3, outDir: THREE.Vector3): number => {
-    const data = runtime.data;
-    const oi = s.origin ? data.index.get(s.origin.id) : undefined;
-    const di = s.destination ? data.index.get(s.destination.id) : undefined;
     const rect = runtime.safe();
     const diameter = framingDiameter(rect);
     const lim = LIMITS[runtime.regime];
     const cur = currentDir(v1);
 
-    if (oi === undefined || di === undefined) {
+    // The sphere to frame: the whole path, and on the solar-system map also where the two bodies
+    // will be at the other end of the flight.
+    const routeDir = v3;
+    const pathRadius = flightBounds(runtime, s, v2, routeDir);
+    if (pathRadius < 0) {
       outTarget.set(0, 0, 0);
       outDir.copy(cur);
       if (Math.abs(outDir.y) > 0.9 || Math.abs(outDir.y) < 0.15) outDir.set(0, 0.45, 1).normalize();
       return distanceToFit(lim.empty, diameter, runtime.height, camera.fov);
     }
-    const p = runtime.data.pos;
-    const o = v2.set(p[oi * 3], p[oi * 3 + 1], p[oi * 3 + 2]);
-    const d = v3.set(p[di * 3], p[di * 3 + 1], p[di * 3 + 2]);
-    outTarget.addVectors(o, d).multiplyScalar(0.5);
-    const length = o.distanceTo(d);
-    const routeDir = d.sub(o).normalize();
+    outTarget.copy(v2);
 
     // Look at the route side-on so it spreads across the screen, from a little above.
     const perp = new THREE.Vector3().crossVectors(routeDir, UP);
@@ -148,7 +151,7 @@ export const CameraRig: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
     outDir.copy(perp).multiplyScalar(Math.cos(elevation)).addScaledVector(UP, Math.sin(elevation)).normalize();
 
     const minRadius = runtime.regime === 'Systemic' ? 0.0015 : 0.004;
-    const radius = Math.max(length / 2, minRadius) * 1.06;
+    const radius = Math.max(pathRadius, minRadius) * 1.06;
     return distanceToFit(radius, diameter, runtime.height, camera.fov);
   };
 
@@ -186,6 +189,8 @@ export const CameraRig: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
     const target = new THREE.Vector3();
     const dir = new THREE.Vector3();
     const dist = flightFrame(useFlightStore.getState(), target, dir);
+    track.current.framedDist = dist;
+    track.current.framedTarget.copy(target);
     startFlight(target, dir, dist, duration, true);
   };
 
@@ -194,6 +199,8 @@ export const CameraRig: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
     const target = new THREE.Vector3();
     const dir = new THREE.Vector3();
     const dist = flightFrame(useFlightStore.getState(), target, dir);
+    track.current.framedDist = dist;
+    track.current.framedTarget.copy(target);
     const fromDir = dir.clone().applyAxisAngle(UP, -0.9);
     fromDir.y += 0.35;
     const lim = LIMITS[runtime.regime];
@@ -264,15 +271,51 @@ export const CameraRig: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
       t.autoSpeed = 0;
     }
 
+    // A path that rides along with a body (the Earth-Moon trips): the camera rides along too,
+    // otherwise Earth would leave the view within seconds of playback.
+    const frameName = s.regime === 'Systemic' ? s.profile?.trajectory?.frame ?? null : null;
+    const anchor = frameName ? indexByName(runtime.data, frameName) : -1;
+    if (anchor >= 0) {
+      const p = runtime.data.pos;
+      v1.set(p[anchor * 3], p[anchor * 3 + 1], p[anchor * 3 + 2]);
+      if (t.anchor === anchor) {
+        v2.subVectors(v1, t.anchorPos);
+        if (v2.lengthSq() > 0) {
+          c.target.add(v2);
+          camera.position.add(v2);
+          f.fromTarget.add(v2);
+          f.toTarget.add(v2);
+          t.framedTarget.add(v2);
+        }
+      }
+      t.anchorPos.copy(v1);
+    }
+    t.anchor = anchor;
+
     // Map change (also the first frame): rebuild framing with an intro flight.
     if (t.regime !== s.regime) {
       t.regime = s.regime;
       t.route = s.routeRevision;
+      t.flightRev = s.flightRevision;
       runtime.userMoved = false;
       intro();
     } else if (t.route !== s.routeRevision) {
       t.route = s.routeRevision;
+      t.flightRev = s.flightRevision;
       frameFlight(1200);
+    } else if (t.flightRev !== s.flightRevision) {
+      // Same route, different flight (another engine, date or fuel budget). On the solar-system
+      // map that can change the shape and size of the path: re-frame when it has moved or grown
+      // noticeably, unless the user has taken the camera.
+      t.flightRev = s.flightRevision;
+      if (s.regime === 'Systemic' && !runtime.userMoved) {
+        const target = new THREE.Vector3();
+        const dir = new THREE.Vector3();
+        const dist = flightFrame(s, target, dir);
+        const ratio = t.framedDist > 0 ? dist / t.framedDist : 2;
+        const moved = target.distanceTo(t.framedTarget) / Math.max(dist, 1e-9);
+        if (ratio > 1.12 || ratio < 0.88 || moved > 0.06) frameFlight(900);
+      }
     }
 
     // Requests from the rest of the interface.

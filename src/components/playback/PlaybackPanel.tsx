@@ -3,6 +3,7 @@ import type { PanelProps } from '../panelProps';
 import { useFlightStore, PLAYBACK_BASE_SECONDS, PLAYBACK_RATES } from '../../state/useFlightStore';
 import { formatDuration } from '../../lib/format';
 import { SpeedChart } from './SpeedChart';
+import { LaunchWindowChart } from './LaunchWindowChart';
 import { Readouts, PhaseChip } from './Readouts';
 import { FamousFlightChips } from './FamousFlightChips';
 import { Announcer } from './Announcer';
@@ -107,10 +108,29 @@ const Transport: React.FC<{ compact: boolean }> = ({ compact }) => {
   );
 };
 
+type ChartView = 'speed' | 'windows';
+
+/** "Speed" / "Launch windows": only offered for chemical-rocket flights round the Sun. */
+const ViewSwitch: React.FC<{ view: ChartView; onChange: (v: ChartView) => void }> = ({ view, onChange }) => (
+  <div className="playback-view" role="group" aria-label="Chart">
+    <button type="button" className="playback-axis-btn" aria-pressed={view === 'speed'} onClick={() => onChange('speed')}>
+      Speed
+    </button>
+    <button type="button" className="playback-axis-btn" aria-pressed={view === 'windows'} onClick={() => onChange('windows')}>
+      Launch windows
+    </button>
+  </div>
+);
+
 export const PlaybackPanel: React.FC<PanelProps> = ({ compact = false }) => {
   const active = useFlightStore((s) => s.hasFlown || s.progress > 0);
   const profile = useFlightStore((s) => s.profile);
-  const showChart = active || !compact || !profile;
+  const ballistic = useFlightStore((s) => s.plan?.model === 'ballistic');
+  const [chosen, setChosen] = useState<ChartView>('speed');
+  // The choice is remembered, but only applies while the flight is one the chart can show.
+  const view: ChartView = ballistic ? chosen : 'speed';
+  // On phones the chart waits for the first playback, except where it also offers launch windows.
+  const showChart = active || !compact || !profile || ballistic;
 
   return (
     <div className={`playback-root${compact ? ' is-compact' : ''}`}>
@@ -120,7 +140,14 @@ export const PlaybackPanel: React.FC<PanelProps> = ({ compact = false }) => {
           {active ? <Transport compact={compact} /> : <LaunchPrompt compact={compact} />}
         </div>
       )}
-      {showChart && <SpeedChart compact={compact} />}
+      {showChart && (
+        <div className="playback-charts">
+          {ballistic && <ViewSwitch view={view} onChange={setChosen} />}
+          <div key={view} className="playback-view-swap">
+            {view === 'windows' ? <LaunchWindowChart compact={compact} /> : <SpeedChart compact={compact} />}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -554,3 +554,163 @@
     min-height: var(--hit-target);
   }
 }
+
+/* ---------- When (launch date, plan summary, arrival) ---------- */
+
+/* The empty wrapper (star map, no plan) must not add a gap. */
+.plan-root > .enter:empty {
+  display: none;
+}
+.plan-when-date {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.plan-when-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.plan-step {
+  flex: 0 0 auto;
+  width: var(--hit-target);
+  height: var(--hit-target);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-control);
+  color: var(--color-text-secondary);
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+}
+.plan-step:hover {
+  background: var(--color-bg-control-hover);
+  color: var(--color-accent-active-soft);
+}
+.plan-step:active {
+  transform: scale(0.93);
+}
+.plan-root input.plan-date {
+  flex: 1 1 140px;
+  min-width: 0;
+  min-height: var(--hit-target);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-control);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  color-scheme: dark;
+}
+.plan-root input.plan-date:hover {
+  border-color: var(--color-accent-a55);
+}
+.plan-today {
+  min-height: var(--hit-target);
+}
+.plan-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+.plan-fact {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-panel-light);
+}
+.plan-fact dt {
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+}
+.plan-fact dd {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.plan-fuel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.plan-fuel-line {
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+}
+.plan-fuel-line .num {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+.plan-meter {
+  display: block;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-track);
+  overflow: hidden;
+}
+.plan-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-active);
+  transition: width var(--dur-slow) var(--ease-out), background-color var(--dur-med) ease;
+}
+.plan-meter.is-over .plan-meter-fill {
+  background: var(--color-danger);
+}
+.plan-warn {
+  padding: var(--space-3);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: var(--color-text-primary);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+.plan-pinned {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.plan-pinned .plan-chip {
+  min-height: var(--hit-target);
+  white-space: normal;
+}
+.plan-arrival {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.plan-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-control);
+}
+.plan-seg-btn {
+  min-height: var(--hit-target);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-small);
+  color: var(--color-text-secondary);
+  font-size: var(--text-small);
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.plan-seg-btn:hover {
+  background: var(--color-bg-control-hover);
+}
+.plan-seg-btn[aria-pressed='true'] {
+  background: var(--color-accent-a20);
+  color: var(--color-accent-active-pale);
+  font-weight: 600;
+}

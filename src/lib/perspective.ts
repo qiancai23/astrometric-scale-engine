@@ -16,6 +16,12 @@ export interface PerspectiveInput {
   regime: 'Systemic' | 'Interstellar';
   originName: string;
   destinationName: string;
+  /**
+   * True when the ship follows a curved orbit-following path (chemical rocket, ion drive, Moon trips)
+   * rather than a straight line. Then `distanceMeters` is the length of the path flown, and the energy is
+   * that of the velocity change, so the wording avoids "the distance between" and "peak speed".
+   */
+  curvedPath?: boolean;
 }
 
 export interface PerspectiveRow {
@@ -111,7 +117,7 @@ export function buildPerspective(input: PerspectiveInput): PerspectiveRow[] {
 
   rows.push({
     id: 'light',
-    label: 'Light makes this trip in',
+    label: input.curvedPath ? 'Light would fly the same path in' : 'Light makes this trip in',
     value: formatDuration(input.distanceMeters / SPEED_OF_LIGHT),
   });
 
@@ -121,7 +127,7 @@ export function buildPerspective(input: PerspectiveInput): PerspectiveRow[] {
   } else {
     rows.push({
       id: 'voyager',
-      label: 'Voyager 1 would need',
+      label: input.curvedPath ? 'Voyager 1 would need, for that path,' : 'Voyager 1 would need',
       value: formatDuration(input.distanceMeters / VOYAGER_1_METERS_PER_SECOND),
     });
   }
@@ -137,7 +143,11 @@ export function buildPerspective(input: PerspectiveInput): PerspectiveRow[] {
       note: 'A placeholder model, not real physics.',
     });
   } else {
-    rows.push({ id: 'energy', label: 'Energy to reach peak speed', value: worldEnergyUse(input.energyExajoules) });
+    rows.push({
+      id: 'energy',
+      label: input.curvedPath ? 'Energy of the speed changes' : 'Energy to reach peak speed',
+      value: worldEnergyUse(input.energyExajoules),
+    });
   }
 
   return rows.filter((r, i) => i === 0 || clean(r)).slice(0, 4);

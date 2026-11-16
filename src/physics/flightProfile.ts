@@ -19,7 +19,30 @@ import { SPEED_OF_LIGHT } from './kinematicsEngine';
  * All times are seconds, distances metres, speeds metres per second.
  */
 
-export type FlightPhase = 'accel' | 'coast' | 'decel' | 'warp' | 'arrived';
+/**
+ * `orbit`: coasting on an orbit round the Sun (or Earth) with the engine off.
+ * `spiral`: a low-thrust engine pushing all the way along a slow spiral.
+ */
+export type FlightPhase = 'accel' | 'coast' | 'decel' | 'warp' | 'orbit' | 'spiral' | 'arrived';
+
+/**
+ * The shape of a flight in space, for flights on the solar-system map. Without one, a flight is
+ * a straight line between two fixed points (the star map).
+ */
+export interface Trajectory {
+  /**
+   * `ballistic`: a coasting orbit. `spiral`: a low-thrust spiral. `direct`: a straight line from
+   * where the origin is at launch to where the destination will be on arrival.
+   */
+  kind: 'ballistic' | 'spiral' | 'direct';
+  /** Catalog name of the body the points are measured from, or null for the Sun. */
+  frame: string | null;
+  /** The path as a polyline: three numbers (x, y, z in AU, ecliptic) per point. */
+  points: Float64Array;
+  count: number;
+  /** How far along the polyline (0 = first point, 1 = last) the ship is at fraction `f` of the flight's Earth time. */
+  paramAt(f: number): number;
+}
 
 export interface FlightSample {
   /** 0..1 fraction of the Earth-time duration of the flight. */
@@ -71,6 +94,8 @@ export interface FlightProfile {
   atFraction(f: number): FlightSample;
   /** Earth-time fraction at which the ship has covered `distanceFraction` (0..1) of the route. */
   fractionAtDistance(distanceFraction: number): number;
+  /** The path through the solar system. Absent on the star map. */
+  trajectory?: Trajectory;
 }
 
 export interface SublightProfileParams {

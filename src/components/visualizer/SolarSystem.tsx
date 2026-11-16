@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useFlightStore } from '../../state/useFlightStore';
 import { prefersReducedMotion } from '../../lib/motion';
-import { BODY_SPECS, bodyRadiusUnits, toScene } from './sceneData';
+import { elementsAt, orbitOutline } from '../../physics/ephemeris';
+import { BODY_SPECS, bodyRadiusUnits } from './sceneData';
 import { pxPerUnit } from './mapMath';
 import type { MapRuntime } from './mapRuntime';
 
@@ -17,6 +18,8 @@ interface Body {
 
 interface Orbit {
   id: string;
+  /** Catalog name, e.g. "Mars". */
+  name: string;
   line: THREE.Line;
   material: THREE.LineBasicMaterial;
   /** Resting opacity when the layer is on. */
@@ -24,7 +27,24 @@ interface Orbit {
 }
 
 const DEG = Math.PI / 180;
-const tmp = new THREE.Vector3();
+/** Points per orbit line. */
+const ORBIT_POINTS = 241;
+/** Orbits drift slowly over the centuries: redraw the lines when the date moves this many days. */
+const ORBIT_REDRAW_DAYS = 1500;
+
+/** Write a body's orbit for `day` into its line, in scene coordinates. */
+function drawOrbit(o: Orbit, day: number): void {
+  const attr = o.line.geometry.getAttribute('position') as THREE.BufferAttribute;
+  const arr = attr.array as Float32Array;
+  orbitOutline(o.name, day, ORBIT_POINTS, arr);
+  for (let k = 0; k < ORBIT_POINTS; k++) {
+    // Ecliptic (x, y, z) to scene (x, z, -y).
+    const y = arr[k * 3 + 1];
+    arr[k * 3 + 1] = arr[k * 3 + 2];
+    arr[k * 3 + 2] = -y;
+  }
+  attr.needsUpdate = true;
+}
 
 /**
  * The solar-system map: Sol, the planets and the Moon as small lit spheres that never shrink
@@ -79,17 +99,10 @@ export const SolarSystem: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
     }
 
     for (const entry of data.entries) {
-      const path = entry.obj.orbit_path;
-      if (!path || path.length < 2 || entry.catalogName === 'Moon') continue;
-      const arr = new Float32Array(path.length * 3);
-      path.forEach((p, k) => {
-        toScene(p, 'Systemic', tmp);
-        arr[k * 3] = tmp.x;
-        arr[k * 3 + 1] = tmp.y;
-        arr[k * 3 + 2] = tmp.z;
-      });
+      // Every body with an orbit round the Sun gets a line (the Moon's would be lost inside Earth's).
+      if (entry.catalogName === 'Moon' || !elementsAt(entry.catalogName, 0)) continue;
       const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ORBIT_POINTS * 3), 3));
       const base = entry.kind === 'planet' ? 0.22 : 0.12;
       const material = new THREE.LineBasicMaterial({ transparent: true, opacity: 0, depthTest: false, depthWrite: false });
       disposables.push(geo, material);
@@ -97,12 +110,16 @@ export const SolarSystem: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
       line.frustumCulled = false;
       line.renderOrder = 1;
       root.add(line);
-      orbits.push({ id: entry.id, line, material, base });
+      orbits.push({ id: entry.id, name: entry.catalogName, line, material, base });
     }
     return { root, bodies, orbits, disposables };
   }, [data]);
 
   useEffect(() => () => disposables.forEach((d) => d.dispose()), [disposables]);
+  const orbitsDrawnFor = useRef(NaN);
+  useEffect(() => {
+    orbitsDrawnFor.current = NaN;
+  }, [orbits]);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.1);
@@ -111,10 +128,19 @@ export const SolarSystem: React.FC<{ runtime: MapRuntime }> = ({ runtime }) => {
     const fov = camera.fov;
     const h = runtime.height;
 
+    // Orbit lines are drawn from the same orbits the bodies follow, so each body sits on its line.
+    const day = data.day;
+    if (Number.isFinite(day) && !(Math.abs(day - orbitsDrawnFor.current) < ORBIT_REDRAW_DAYS)) {
+      orbitsDrawnFor.current = day;
+      for (const o of orbits) drawOrbit(o, day);
+    }
+
     // Minimum on-screen size: scale a body up when its true size would drop below its pixel floor.
     let earthIdx = -1;
     let moonBody: Body | null = null;
     for (const b of bodies) {
+      // Bodies move with the map's date.
+      b.group.position.set(data.pos[b.index * 3], data.pos[b.index * 3 + 1], data.pos[b.index * 3 + 2]);
       const dist = Math.max(camera.position.distanceTo(b.group.position), 1e-9);
       const k = pxPerUnit(dist, h, fov);
       const truePx = b.radius * k;

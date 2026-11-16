@@ -4,16 +4,18 @@ import {
   C_TO_KMS,
   accelFeel,
   accelToSlider,
+  dvToSlider,
   getEngine,
   massToSlider,
   shipClass,
   sliderToAccel,
+  sliderToDv,
   sliderToMass,
   sliderToSpeed,
   speedToSlider,
 } from '../../data/engines';
 import type { SublightEngine, WarpEngine } from '../../data/engines';
-import { formatAccel, formatBeta, formatCount, formatMass, formatSpeed, formatWarpFactor } from '../../lib/format';
+import { formatAccel, formatDeltaV, formatBeta, formatCount, formatMass, formatSpeed, formatWarpFactor } from '../../lib/format';
 
 interface SliderRowProps {
   id: string;
@@ -55,16 +57,28 @@ const NINES = [0.9, 0.99, 0.999];
 const SublightSliders: React.FC<{ engine: SublightEngine }> = ({ engine }) => {
   const accelerationG = useFlightStore((s) => s.accelerationG);
   const speedCapC = useFlightStore((s) => s.speedCapC);
+  const deltaVKms = useFlightStore((s) => s.deltaVKms);
   const profile = useFlightStore((s) => s.profile);
+  const planModel = useFlightStore((s) => s.plan?.model ?? null);
   const setShipParams = useFlightStore((s) => s.setShipParams);
+
+  // Orbit-following flights (a chemical rocket round the Sun or Earth-Moon, the ion drive's spiral)
+  // are limited by fuel, not by a speed limit, so the controls differ from the straight-line case.
+  const rocket = !!engine.orbital && (planModel === 'ballistic' || planModel === 'lunar');
+  const spiral = !!engine.orbital && planModel === 'spiral';
+  const orbitFollowing = rocket || spiral;
+  const showAccel = !rocket;
+  const showSpeed = !orbitFollowing;
+  const dvPos = engine.orbital ? dvToSlider(engine, deltaVKms) : 0;
 
   const accelPos = accelToSlider(engine, accelerationG);
   const speedPos = speedToSlider(engine, speedCapC);
   const speedReadout = engine.speedInKms ? `${formatCount(speedCapC * C_TO_KMS)} km/s` : `${formatBeta(speedCapC)} c`;
-  const tooShort = profile && !profile.hasCoast;
+  const tooShort = !orbitFollowing && profile && !profile.hasCoast;
 
   return (
     <>
+      {showAccel && (
       <SliderRow
         id={`plan-accel-${engine.id}`}
         label="Acceleration"
@@ -75,7 +89,13 @@ const SublightSliders: React.FC<{ engine: SublightEngine }> = ({ engine }) => {
         value={accelPos}
         fill={accelPos}
         onChange={(p) => setShipParams({ accelerationG: sliderToAccel(engine, p) })}
-      />
+      >
+        {spiral && (
+          <p className="plan-note">The engine pushes the whole way: halving the thrust doubles the trip.</p>
+        )}
+      </SliderRow>
+      )}
+      {showSpeed && (
       <SliderRow
         id={`plan-speed-${engine.id}`}
         label="Speed limit"
@@ -106,6 +126,24 @@ const SublightSliders: React.FC<{ engine: SublightEngine }> = ({ engine }) => {
           </p>
         )}
       </SliderRow>
+      )}
+      {orbitFollowing && engine.orbital && (
+        <SliderRow
+          id={`plan-dv-${engine.id}`}
+          label="Fuel budget"
+          readout={formatDeltaV(deltaVKms)}
+          min={0}
+          max={1}
+          step={0.001}
+          value={dvPos}
+          fill={dvPos}
+          onChange={(p) => setShipParams({ deltaVKms: sliderToDv(engine, p) })}
+        >
+          <p className="plan-note">
+            The total change of speed the {rocket ? 'rocket' : 'engine'} can make, counted from a low orbit round the starting body.
+          </p>
+        </SliderRow>
+      )}
     </>
   );
 };
@@ -137,7 +175,13 @@ export const TuneSliders: React.FC = () => {
 
   const reset = () => {
     if (engine.drive === 'Warp') setShipParams({ warpFactor: engine.defaultFactor });
-    else setShipParams({ accelerationG: engine.defaultG, speedCapC: engine.defaultC });
+    else {
+      setShipParams({
+        accelerationG: engine.defaultG,
+        speedCapC: engine.defaultC,
+        ...(engine.orbital ? { deltaVKms: engine.orbital.defaultDv } : {}),
+      });
+    }
   };
 
   return (

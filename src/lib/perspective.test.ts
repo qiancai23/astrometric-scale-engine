@@ -75,6 +75,16 @@ describe('buildPerspective', () => {
     expect(row(buildPerspective(base), 'energy')?.note).toBeUndefined();
   });
 
+  test('curved-path flights word the light, Voyager and energy rows for a path', () => {
+    const rows = buildPerspective({ ...base, regime: 'Systemic', originName: 'Mars', destinationName: 'Saturn', curvedPath: true });
+    expect(row(rows, 'light')?.label).toBe('Light would fly the same path in');
+    expect(row(rows, 'voyager')?.label).toBe('Voyager 1 would need, for that path,');
+    expect(row(rows, 'energy')?.label).toBe('Energy of the speed changes');
+    const straight = buildPerspective({ ...base, regime: 'Systemic', originName: 'Mars', destinationName: 'Saturn' });
+    expect(row(straight, 'light')?.label).toBe('Light makes this trip in');
+    expect(row(straight, 'energy')?.label).toBe('Energy to reach peak speed');
+  });
+
   test('never more than 4 rows, light first', () => {
     const rows = buildPerspective({ ...base, regime: 'Systemic', originName: 'Earth', destinationName: 'Moon' });
     expect(rows.length).toBeLessThanOrEqual(4);

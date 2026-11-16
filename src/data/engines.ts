@@ -36,6 +36,12 @@ export interface SublightEngine {
   /** Show the speed limit in km/s instead of fractions of c (slow engines). */
   speedInKms: boolean;
   hypothetical: boolean;
+  /**
+   * Present on engines that follow real orbits on the solar-system map (chemical rocket, ion
+   * drive). There the tuning that matters is the fuel budget: the total change of velocity the
+   * ship can make, in km/s.
+   */
+  orbital?: { minDv: number; maxDv: number; defaultDv: number };
 }
 
 export interface WarpEngine {
@@ -72,22 +78,28 @@ export const ENGINES: readonly EngineDef[] = [
     speedScale: 'linear',
     speedInKms: true,
     hypothetical: false,
+    // From low orbit: about 4 km/s reaches Mars in a good launch window; 16 is beyond today's rockets.
+    orbital: { minDv: 3, maxDv: 16, defaultDv: 6 },
   },
   {
     id: 'ion',
     drive: 'Sublight',
     label: 'Ion drive',
     shortLabel: 'Ion',
-    blurb: 'A gentle push that never stops.',
-    minG: 0.001,
-    maxG: 0.1,
-    defaultG: 0.1,
-    minC: 0.001,
-    maxC: 0.01,
-    defaultC: 0.01,
+    blurb: 'A push as light as a sheet of paper, for years on end.',
+    // Real ion engines: NASA's Dawn managed about 0.000008 g. The top of the range is a
+    // nuclear-electric design that has not flown.
+    minG: 0.000001,
+    maxG: 0.0001,
+    defaultG: 0.00001,
+    minC: 10 / C_TO_KMS,
+    maxC: 200 / C_TO_KMS,
+    defaultC: 100 / C_TO_KMS,
     speedScale: 'linear',
     speedInKms: true,
     hypothetical: false,
+    // Dawn carried about 11 km/s of velocity change; 100 km/s is an ambitious future craft.
+    orbital: { minDv: 5, maxDv: 100, defaultDv: 30 },
   },
   {
     id: 'fusion',
@@ -161,6 +173,8 @@ export const clamp = (value: number, min: number, max: number): number => Math.m
 export interface SublightSettings {
   accelerationG: number;
   speedCapC: number;
+  /** Fuel budget in km/s of velocity change. 0 for engines that do not use one. */
+  deltaVKms: number;
 }
 
 export type EngineSettings = Record<SublightEngineId, SublightSettings>;
@@ -169,16 +183,21 @@ export function defaultEngineSettings(): EngineSettings {
   const settings = {} as EngineSettings;
   for (const id of SUBLIGHT_ENGINE_IDS) {
     const e = getSublightEngine(id);
-    settings[id] = { accelerationG: e.defaultG, speedCapC: e.defaultC };
+    settings[id] = { accelerationG: e.defaultG, speedCapC: e.defaultC, deltaVKms: e.orbital?.defaultDv ?? 0 };
   }
   return settings;
 }
 
-export function clampSublightSettings(id: SublightEngineId, s: SublightSettings): SublightSettings {
+export function clampSublightSettings(
+  id: SublightEngineId,
+  s: Pick<SublightSettings, 'accelerationG' | 'speedCapC'> & { deltaVKms?: number },
+): SublightSettings {
   const e = getSublightEngine(id);
+  const dv = s.deltaVKms;
   return {
     accelerationG: clamp(Number.isFinite(s.accelerationG) ? s.accelerationG : e.defaultG, e.minG, e.maxG),
     speedCapC: clamp(Number.isFinite(s.speedCapC) ? s.speedCapC : e.defaultC, e.minC, e.maxC),
+    deltaVKms: e.orbital ? clamp(dv !== undefined && Number.isFinite(dv) && dv > 0 ? dv : e.orbital.defaultDv, e.orbital.minDv, e.orbital.maxDv) : 0,
   };
 }
 
@@ -219,6 +238,19 @@ export function sliderToAccel(engine: SublightEngine, position: number): number 
   return clamp(engine.minG * Math.pow(engine.maxG / engine.minG, p), engine.minG, engine.maxG);
 }
 
+/** Fuel budget (km/s of velocity change) to slider position 0..1. Logarithmic. Engines without a budget give 0. */
+export function dvToSlider(engine: SublightEngine, dvKms: number): number {
+  const o = engine.orbital;
+  if (!o) return 0;
+  return Math.log(clamp(dvKms, o.minDv, o.maxDv) / o.minDv) / Math.log(o.maxDv / o.minDv);
+}
+
+export function sliderToDv(engine: SublightEngine, position: number): number {
+  const o = engine.orbital;
+  if (!o) return 0;
+  return clamp(o.minDv * Math.pow(o.maxDv / o.minDv, clamp(position, 0, 1)), o.minDv, o.maxDv);
+}
+
 /** Ship mass (kg) to slider position 0..1. Logarithmic. */
 export function massToSlider(massKg: number): number {
   const v = clamp(massKg, MIN_MASS_KG, MAX_MASS_KG);
@@ -245,6 +277,7 @@ export function shipClass(massKg: number): string {
 
 /** A plain-language gloss for an acceleration, e.g. "feels like Earth". */
 export function accelFeel(g: number): string {
+  if (g < 0.0005) return 'the weight of a sheet of paper';
   if (g < 0.02) return 'barely a nudge';
   if (g < 0.12) return 'a gentle lean';
   if (g < 0.25) return 'like the Moon';
@@ -298,6 +331,11 @@ export function compareEngines(
     return { engine, earthSeconds: r.coordinateTime, shipSeconds: r.properTime, peakVelocity: r.peakVelocity, logFraction: 0 };
   });
 
+  return applyLogFractions(rows);
+}
+
+/** Fill in `logFraction` for a set of comparison rows (shared logarithmic bar scale). */
+export function applyLogFractions(rows: EngineComparison[]): EngineComparison[] {
   const times = rows.map((r) => r.earthSeconds).filter((t) => t > 0);
   if (times.length === 0) return rows;
 

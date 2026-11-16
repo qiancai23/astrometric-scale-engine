@@ -1,70 +1,75 @@
 # HANDOFF
 
-Last updated: 2026-11-15 (fifth round of the day)
+Last updated: 2026-11-16 (third round of the day: date-based solar-system flights built, reviewed and clicked through; not yet committed)
 
 ## Project goal
 Astrometric Scale Engine: a browser app (React 18, TypeScript, Vite 6, Zustand, Three.js) that answers "how long does it take to get there, and how much less do you age than the people you left behind?" The visitor picks an origin and a destination (planets and moons in the solar system, or stars, exoplanets and deep-sky objects), picks one of five engines (chemical rocket, ion drive, fusion torch, antimatter rocket, warp drive), and sees the travel time on the ship and on Earth, with a 3D map and a playable flight.
 
 Live site: https://astro.brucedgates.com/ (Cloudflare, deploys on push to `main`). Repository: https://github.com/qiancai23/astrometric-scale-engine.
 
-## Current state: the redesign is committed and pushed to `main`
-The whole redesign is one commit on `main` (`47e0201`, "Redesign: full-window map, flight plan, answer and playback panels"), pushed on 2026-11-15. Cloudflare deployed it: the live site served the new page about 4 minutes after the push (checked by its page title only, not by using the site).
+## Current state
+**Everything from the 2026-11-16 rounds is in the working tree, uncommitted and unpushed.** The live site still shows the previous version. Nothing was committed because Bruce has not asked for a commit, and a push to `main` deploys the live site.
 
-The owner (Bruce) approved the design review (`UIUX/DESIGN_REVIEW_2026-11-15.md`) and asked for the build. It is done:
+Bruce asked (2026-11-16) for the solar-system map to be accurate and date-dependent, after noticing a chemical rocket reached Mars in 1 month 6 days (real missions: 4 to 9 months). He approved building three stages and deferring gravity assists, and asked for the ion drive to be fixed because it was thousands of times stronger than a real one. Built:
 
-- The 3D map fills the window. Stars are drawn in their real color and brightness with fixed-size name labels. Click any object for a card with "Fly here" and "Start here".
-- Left panel "Flight plan": From / To pickers with one forgiving search across everything (aliases such as "Alpha Centauri", "North Star", "M31"; constellation names; typo tolerance; browse lists such as nearest and brightest stars), a swap button, five engine cards that each show that engine's travel time for the current trip, and tuning sliders.
-- Right panel "The answer": "You age" against "Earth ages" as two large clocks with bars, one plain sentence about the difference, three stat tiles, and plain-language comparisons.
-- Bottom panel "Playback": "Fly this flight" plays the trip in 24 seconds. A ship crosses the map, both clocks tick, a cursor crosses the speed chart, which is also the scrubber. Famous flights are one click.
-- The flight is stored in the page address (for example `?from=sol&to=proxima-centauri&engine=antimatter&a=1&v=0.999&m=1000`), so every flight is a shareable link.
-- Phones and tablets (below 1024 px wide): full-screen map with a bottom sheet and three tabs.
-- Maximum speed is 0.999 c (antimatter rocket).
-- Extensive animation throughout (rolling numbers, cross-fading accent color, self-drawing flight path, twinkling stars, camera flights), all switched off for visitors who ask their system for reduced motion.
+- **Planets where they really are on a chosen date.** Positions come from orbital elements (`src/physics/ephemeris.ts`). The flight has a launch date (default today), stored in the page address. Planets move on the map during playback.
+- **Chemical rocket follows real coasting orbits.** A Lambert solver (`src/physics/lambert.ts`: finds the orbit joining two points in a given time) and a planner (`src/physics/transfer.ts`, `src/physics/flightPlanner.ts`). The chemical rocket's tuning is a fuel budget in km/s of velocity change (3 to 16, default 6) instead of a speed limit. Of all launches on or after the chosen date that fit the budget, the planner picks the one that arrives soonest, so it may wait for a launch window. If nothing fits, it shows the cheapest flight flagged as over budget. "Enter orbit" or "Fly past" switch. Earth to Mars from 16 Nov 2026 on the default budget: 6 months 27 days.
+- **Ion drive made realistic.** Acceleration 0.000001 to 0.0001 g (default 0.00001 g), a slow spiral between orbits on the solar-system map (Earth to Mars about 2 years), and 10 to 200 km/s top speed on the star map (Proxima Centauri: 12,700 years).
+- **Fast engines** (fusion, antimatter, warp) still fly a straight line, now aimed at where the destination will be on arrival. Flights to or from the Sun use this model for every engine.
+- **Launch-window chart** in the playback panel ("Speed" / "Launch windows" switch): launch date against travel time, brighter where less fuel is needed; clicking a cell flies exactly that flight.
+- **Map:** curved flight path, ship follows it, orbit lines drawn from the same orbital elements, "LAUNCH · Earth was here" and "ARRIVAL · Mars will be here" markers, camera frames the whole path.
+- **Famous flights** now include real missions with their real launch dates (Apollo 11, Mariner 7, Perseverance, New Horizons).
+- **User guide** (`public/help.html`) updated.
 
-Verified: 107 Jest tests pass, the TypeScript check is clean, the production build succeeds, and the app was driven in headless Microsoft Edge at 1440, 1280, 1024 and 390 px wide with no console errors and no horizontal overflow. Result screenshots are in `UIUX/build-2026-11-15/`.
+The full technical record (every module, the math, the limits) is in `UPDATES_2026-11-16_07-32-23.md`.
 
-**Not verified:** a real graphics card (only the software renderer was used, so star sizes, glow, twinkle and camera feel may need tuning), a real phone, Firefox, Safari, a screen reader, reduced-motion mode.
+### Verified
+- `npx tsc --noEmit` clean, 178 Jest tests pass (10 suites), `npx vite build` succeeds.
+- Physics checked against reality in tests: planet positions within 0.3% of NASA JPL Horizons samples; minimum-fuel Earth to Mars transfer 259 days; Perseverance's and New Horizons' real launch speeds reproduced to within 1%; Mariner 7's 131-day fly-past needs 3.9 km/s.
+- Third round (2026-11-16): the playback panel code left by a helper agent that was cut off was reviewed, and every control was clicked through in headless Microsoft Edge (software renderer) at 1440 px and 390 px wide, with no console errors and no sideways overflow: speed chart for orbit and spiral flights; launch-window chart (hover, click, arrow keys and Enter, "Soonest arrival instead", tap on a phone); month buttons, "Today" and a typed date; "Fly past"; the fuel-budget slider; a whole chemical flight to Mars played to arrival; the reduced-motion setting; the Earth to Moon map.
+- Fixed in the third round: speed-chart labels now read "Fastest ..." and "Slowest ..."; the speed tag beside the ship on the map got its pill styling back and avoids labels; the over-budget warning no longer calls a hand-picked flight "the cheapest launch found"; the phone sheet at full height stops below the "Solar system / Stars" switch. Details in `UPDATES_2026-11-16_11-42-42.md`.
+
+### Not verified, and known rough edges
+- No real graphics card, real phone, Firefox, Safari or screen reader has been tried.
+- After picking a flight on the launch-window chart, "Soonest arrival instead" keeps the picked launch date as the earliest date; it does not return to the date chosen before.
+- The fuel-budget slider moves only about 0.01 km/s per arrow key.
+- With the phone sheet at full height, only about 40 px of map remains and the zoom buttons crowd into it.
+- On the Earth to Moon map, the Moon's orbit line (seen nearly edge-on) runs through the arrival caption.
 
 ## Next steps
-1. Bruce looks at it on a real screen and a real phone: `npm run dev`, then open the address Vite prints. Things most likely to need tuning are listed under "Where to tune" below.
-2. Bruce tries the live site (https://astro.brucedgates.com/) on a real screen and phone; tuning fixes go out as normal pushes to `main`.
-3. Optional follow-ups, none started: load the star catalog on demand so the first screen appears sooner (the catalog is a 1 MB chunk loaded before the interface); stop the object card on the map from covering the origin or the path; delete the unused duplicate catalogs in `src/scripts/`.
+1. Ask Bruce to look at it locally (`npm run dev`), then commit; push only on his go-ahead (a push deploys the live site).
+2. Later, not started, Bruce agreed to wait: gravity assists (a flyby of Venus, Earth, Mars or Jupiter on the way).
+3. Optional: the rough edges listed above; load the star catalog on demand; stop the object card on the map from covering the origin or the path; delete the unused duplicate catalogs in `src/scripts/`.
+
+## Decisions by Bruce
+- 2026-11-16: the chemical rocket's default fuel budget stays 6 km/s (Mars in about 7 months; Jupiter needs 6.7 and shows as over budget until the slider is raised).
+- 2026-11-16: the default flight on a first visit stays Earth to Mars by fusion torch at 1 g.
+- Earlier: keep the 0.999 c top speed "for now".
 
 ## Open questions for Bruce
-- None pending. Decided 2026-11-15: keep the 0.999 c top speed "for now" (no unlimited sixth engine yet; "1 g to Andromeda" stays at about 114,000 years of ship time). Bruce may revisit this.
+- None that block work. Commit and push wait for his word.
 
 ## Key file paths
-- `UIUX/BUILD_SPEC_2026-11-15.md` — the contract the redesign was built against: decisions, rules, design tokens, motion requirements, layout, who owns which files. Read this before changing the interface.
-- `UPDATES_2026-11-15_18-23-07.md` — technical record of the build: every module, the math, the defects closed, technical debt.
-- `UIUX/DESIGN_REVIEW_2026-11-15.md` — the review that led to the redesign. `UIUX/review-2026-11-15/` — screenshots of the old site. `UIUX/build-2026-11-15/` — screenshots of the new one.
-- `src/state/useFlightStore.ts` — the store, single source of truth; its `FlightState` interface documents every field and action.
-- `src/physics/kinematicsEngine.ts` — trip totals (do not change). `src/physics/flightProfile.ts` — the ship's state at any moment of a flight, used by playback and the chart.
-- `src/data/catalog.ts` (objects and search), `src/data/engines.ts` (the five engines and slider mappings), `src/data/famousFlights.ts`.
-- `src/lib/format.ts` (all number formatting), `src/lib/motion.ts`, `src/lib/tokens.ts`, `src/lib/perspective.ts`, `src/lib/urlState.ts`.
-- `src/index.css` — every color, font, size and motion value.
-- `src/components/shell/` (window layout, top bar, phone sheet), `plan/`, `answer/`, `playback/`, `visualizer/` (the 3D map), each with a stylesheet in `src/styles/`.
-- `public/help.html` — the user guide, rewritten for the new interface.
-- `scripts/stars.json` (3,003 objects), `scripts/systemic.json` (27 objects) — the catalogs the app imports.
-
-## Where to tune (if something looks off on a real screen)
-- Star dot size and glow: `starCoreDiameter` and `HALO` in `src/components/visualizer/sceneData.ts`.
-- How tightly the camera frames a flight: `framingDiameter` in `src/components/visualizer/mapMath.ts`.
-- Background photograph brightness: `src/components/visualizer/Backdrop.tsx`.
-- Playback length (24 seconds at 1×): `PLAYBACK_BASE_SECONDS` in `src/state/useFlightStore.ts`.
-- Colors and animation speeds: the variables at the top of `src/index.css`.
+- `UPDATES_2026-11-16_07-32-23.md` — technical record of the build; `UPDATES_2026-11-16_11-42-42.md` — the review and fixes after it. `UPDATES_2026-11-15_18-23-07.md` — the redesign before it.
+- `UIUX/BUILD_SPEC_2026-11-15.md` — interface rules; read before changing the interface.
+- `src/physics/ephemeris.ts` (positions by date), `lambert.ts` (orbit solver), `transfer.ts` (trip models and launch-window grid), `flightPlanner.ts` (which model for which engine; `FlightPlan`), `flightProfile.ts` (ship state over time; `Trajectory`), `kinematicsEngine.ts` (do not change).
+- `src/state/useFlightStore.ts` — single source of truth. New fields: `departureDay`, `arrivalMode`, `pinnedTofDays`, `deltaVKms`, `plan`. Tests: `src/state/systemicFlights.test.ts`.
+- `src/data/engines.ts` (engines, ranges, slider mappings), `src/data/famousFlights.ts`.
+- `src/components/visualizer/flightGeometry.ts` (map date, path points, ship position, camera bounds), `sceneData.ts` (`setSystemicDay`), `FlightPath.tsx`, `OverlayDriver.tsx`, `CameraRig.tsx`, `SolarSystem.tsx`.
+- `src/components/plan/WhenSection.tsx`, `TuneSliders.tsx`; `src/components/playback/LaunchWindowChart.tsx`, `SpeedChart.tsx`; `src/components/answer/AnswerPanel.tsx`.
+- `scripts/build_elements.py` writes `scripts/elements.json` (orbital elements of the small bodies).
 
 ## Gotchas
-- Interface colors must come from the CSS variables in `src/index.css`; the 3D scene reads them through `src/lib/tokens.ts`. The only literal colors allowed are the physical colors of stars and planets in `src/data/catalog.ts`, and the boot screen in `index.html`.
-- Every displayed number goes through `src/lib/format.ts` and is shown with the `RollingValue` component so it rolls instead of jumping.
-- `progress` in the store changes 60 times a second during playback. Only small leaf components may subscribe to it; the map reads it inside its render loop.
-- The app shell publishes how much of each window edge its panels cover as CSS custom properties (`--map-inset-top`, `-right`, `-bottom`, `-left`) on the `.app-shell` element. The map uses them to keep the flight, labels and its own buttons in the uncovered area.
-- Two separate maps remain ("Systemic" in AU, "Interstellar" in parsecs, the latter drawn at a scale factor of 0.05). The store's `setEndpoint` switches maps automatically when an object from the other map is chosen.
-- Loading a flight (`loadFlight`) resets every engine's tuning to defaults on purpose, so the engine comparison is fair.
-- The original 4.86 MB background image is in `source-assets/` (not deployed). The app uses `public/assets/textures/milky_way_2k.jpg`.
-- To screenshot the app: build, run `npx vite preview`, and drive headless Microsoft Edge with the `puppeteer-core` npm package using the launch flags `--use-angle=swiftshader --enable-unsafe-swiftshader`. It is a software renderer; fine 3D detail differs from a real screen. `puppeteer-core` is not a project dependency; install it outside the repository.
-- Jest runs with `testEnvironment: node` and compiles to CommonJS, so JSON must be imported with `import * as` (see the `unwrapJson` helper in `src/data/catalog.ts`). Tests cover pure logic only, not React components.
-- `LOG.md` is organized newest-first by "Run" in its older part; dated entries are appended at the end. Do not rewrite old entries.
-- `.agentrules` requires every new file to be appended to `session_creation_log` (plain text, Windows line endings at the end of the file; parts of the file are UTF-16, so append bytes, do not rewrite) and an `UPDATES_*.md` file after sessions that change code.
+- Dates are "day numbers": days since 2000-01-01 12:00 UT. Orbit math is in AU and days; fuel in km/s.
+- On the solar-system map, body positions come from `ephemeris.ts`, not from `coords` in `scripts/systemic.json` (a frozen snapshot with each body at a different date).
+- The launch can be later than the chosen date (`plan.launchDay` against `departureDay`); `plan.feasible` is false when the fuel budget is too small.
+- A flight's shape is `profile.trajectory`; absent on the star map. Earth to Moon paths are measured from Earth (`frame: 'Earth'`) and the camera follows Earth.
+- `progress` in the store changes every frame during playback: only small leaf components may subscribe to it.
+- Interface colors only from the CSS variables in `src/index.css`; numbers through `src/lib/format.ts` (`formatDate`, `formatDeltaV` are new).
+- Long shell heredocs fail in this machine's Git Bash ("unexpected EOF"): write a script to a file and run it.
+- `npx vite build` fails from Git Bash ("No matching HTML proxy module found"); run it from PowerShell with the folder written `E:\...` (capital drive letter).
+- To screenshot: `npx vite build`, `npx vite preview --port 4319`, then headless Edge through `puppeteer-core` (not a project dependency: run `npm install puppeteer-core` in a scratch folder outside the repository; Edge is at `C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe`) with `--use-angle=swiftshader --enable-unsafe-swiftshader`. Test address: `/?from=earth&to=mars&engine=chemical&date=2026-11-16`. Stop the preview server afterwards.
+- `.agentrules`: append new file paths to `session_creation_log` (mixed encoding; append bytes, never rewrite) and write an `UPDATES_*.md` after sessions that change code. Both done for every round so far.
+- `LOG.md` is append-only; dated entries go at the end.
+- Jest compiles to CommonJS: import JSON with `import * as` and unwrap `.default`.
 - `npm run lint` has no ESLint config in the repository.
-- `src/scripts/*.json` are unused duplicates of `scripts/*.json`. Edit the `scripts/` ones.
-- `output.txt` (a scratch dump of Gaia warnings) is in `.gitignore`; it is not part of the project.

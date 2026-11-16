@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { entriesFor, CatalogEntry } from '../../data/catalog';
+import { bodyPosition, hasEphemeris } from '../../physics/ephemeris';
 import type { AstrometricRegime } from '../../types';
 
 /**
@@ -117,8 +118,15 @@ export interface RegimeData {
   entries: CatalogEntry[];
   /** id → index into entries. */
   index: Map<string, number>;
-  /** Scene positions, 3 per entry. */
+  /**
+   * Scene positions, 3 per entry. On the solar-system map these follow the date: see
+   * `setSystemicDay`.
+   */
   pos: Float32Array;
+  /** Day number the solar-system positions were last computed for (NaN before the first time). */
+  day: number;
+  /** Goes up whenever `pos` changes, so point layers know to re-upload their positions. */
+  posVersion: number;
   prominence: Float32Array;
   isExo: Uint8Array;
   /** Main field (stars, glyphs, small bodies). */
@@ -225,6 +233,8 @@ export function regimeData(regime: AstrometricRegime): RegimeData {
     entries,
     index,
     pos,
+    day: NaN,
+    posVersion: 0,
     prominence,
     isExo,
     field: buildPoints(entries, pos, fieldIdx),
@@ -233,6 +243,42 @@ export function regimeData(regime: AstrometricRegime): RegimeData {
   };
   cache[regime] = data;
   return data;
+}
+
+const dayScratch = [0, 0, 0];
+
+/**
+ * Move every body of the solar-system map to where it is on `day` (a day number, see
+ * `src/physics/ephemeris.ts`). Cheap enough to call every frame; does nothing when the day has
+ * not changed.
+ */
+export function setSystemicDay(data: RegimeData, day: number): void {
+  if (data.regime !== 'Systemic' || data.day === day || !Number.isFinite(day)) return;
+  data.day = day;
+  data.posVersion++;
+  const { entries, pos } = data;
+  for (let i = 0; i < entries.length; i++) {
+    const name = entries[i].catalogName;
+    if (!hasEphemeris(name)) continue;
+    bodyPosition(name, day, dayScratch);
+    // Ecliptic (x, y, z) to scene (x, z, -y), as in `toScene`.
+    pos[i * 3] = dayScratch[0];
+    pos[i * 3 + 1] = dayScratch[2];
+    pos[i * 3 + 2] = -dayScratch[1];
+  }
+  const f = data.field;
+  for (let k = 0; k < f.indices.length; k++) {
+    const i = f.indices[k];
+    f.position[k * 3] = pos[i * 3];
+    f.position[k * 3 + 1] = pos[i * 3 + 1];
+    f.position[k * 3 + 2] = pos[i * 3 + 2];
+  }
+}
+
+/** Index of the entry with this catalog name ("Earth"), or -1. */
+export function indexByName(data: RegimeData, name: string): number {
+  for (let i = 0; i < data.entries.length; i++) if (data.entries[i].catalogName === name) return i;
+  return -1;
 }
 
 /** Scene position of an entry by id (in the given regime's data). */

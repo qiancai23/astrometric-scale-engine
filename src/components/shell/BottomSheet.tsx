@@ -32,7 +32,8 @@ const useWindowHeight = (): number => {
 const snapHeight = (snap: Snap, vh: number): number => {
   if (snap === 'peek') return PEEK_PX;
   if (snap === 'half') return Math.round(vh * 0.52);
-  return Math.max(PEEK_PX + 40, vh - 72);
+  // Stops below the two rows at the top of the window (buttons, then the map switch).
+  return Math.max(PEEK_PX + 40, vh - 114);
 };
 
 const routeName = (obj: { id: string; name: string } | null): string =>
@@ -44,6 +45,7 @@ const Summary: React.FC<{ onChange: () => void }> = ({ onChange }) => {
   const destination = useFlightStore((s) => s.destination);
   const distance = useFlightStore((s) => s.distanceMeters);
   const profile = useFlightStore((s) => s.profile);
+  const curved = useFlightStore((s) => s.plan !== null && s.plan.model !== 'direct');
   const driveCore = useFlightStore((s) => s.driveCore);
   const playing = useFlightStore((s) => s.playing);
   const togglePlay = useFlightStore((s) => s.togglePlay);
@@ -53,7 +55,7 @@ const Summary: React.FC<{ onChange: () => void }> = ({ onChange }) => {
         <span className="shell-summary-name">
           {origin && destination ? `${routeName(origin)} to ${routeName(destination)}` : 'Choose a flight'}
         </span>
-        <span className="shell-summary-sub">{distance > 0 ? `${formatDistance(distance)} · tap to change` : 'Tap to choose'}</span>
+        <span className="shell-summary-sub">{distance > 0 ? `${formatDistance(distance)}${curved ? ' path' : ''} · tap to change` : 'Tap to choose'}</span>
       </button>
       <div className="shell-summary-time">
         {profile ? (

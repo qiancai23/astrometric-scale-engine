@@ -201,9 +201,29 @@ export function formatMass(kg: number): string {
   return `${group(Number(tonnes.toPrecision(3)))}${NBSP}t`;
 }
 
-/** Acceleration in g: "1.00 g", "0.10 g", "0.005 g". */
+/** Acceleration in g: "1.00 g", "0.10 g", "0.005 g", "0.00001 g" (ion drives). */
 export function formatAccel(g: number): string {
+  if (g > 0 && g < 0.001) return `${sig(g, 2)}${NBSP}g`;
   return `${g < 0.01 ? g.toFixed(3) : g.toFixed(2)}${NBSP}g`;
+}
+
+/** A change of velocity ("fuel budget") in km/s: "4.3 km/s", "12.5 km/s", "38 km/s", "120 km/s". */
+export function formatDeltaV(kms: number): string {
+  if (!Number.isFinite(kms)) return '∞';
+  if (!(kms > 0)) return `0${NBSP}km/s`;
+  return `${kms >= 100 ? group(Math.round(kms)) : kms >= 20 ? String(Math.round(kms)) : kms.toFixed(1)}${NBSP}km/s`;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * A calendar date from a day number (days since 2000-01-01 12:00 UT): "18 Feb 2021".
+ * Fractional day numbers round to the nearest calendar day.
+ */
+export function formatDate(day: number): string {
+  if (!Number.isFinite(day)) return '';
+  const d = new Date((Math.round(day) + 10957.5) * 86400000);
+  return `${d.getUTCDate()}${NBSP}${MONTHS[d.getUTCMonth()]}${NBSP}${d.getUTCFullYear()}`;
 }
 
 /** Warp factor: "10 × light speed". */

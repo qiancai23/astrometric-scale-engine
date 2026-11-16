@@ -1,5 +1,4 @@
 import type { FlightSpec } from '../types';
-import { C_TO_KMS } from './engines';
 
 /** A ready-made flight offered on the first screen. */
 export interface FamousFlight {
@@ -11,19 +10,17 @@ export interface FamousFlight {
   spec: FlightSpec;
 }
 
-const kms = (speedKms: number): number => speedKms / C_TO_KMS;
-
 /**
- * Famous flights, nearest first. Speeds for the historical missions are set so the travel time
- * comes out close to what really happened (real missions do not fly straight lines, so these are
- * approximations and the blurbs say so).
+ * Famous flights, nearest first. The historical missions carry their real launch date and travel
+ * time (`date`, `tof`): the app then works out the coasting orbit for that date and the fuel it
+ * takes, which can be compared with what the real rocket delivered.
  */
 export const FAMOUS_FLIGHTS: readonly FamousFlight[] = [
   {
     id: 'apollo-moon',
     label: 'Apollo to the Moon',
-    blurb: 'A chemical rocket coasting at about 1.4 km/s: roughly three days, like Apollo 11.',
-    spec: { from: 'earth', to: 'moon', engine: 'chemical', a: 1, v: kms(1.45), m: 45 },
+    blurb: 'Apollo 11, 16 July 1969: a little over three days from Earth orbit to lunar orbit.',
+    spec: { from: 'earth', to: 'moon', engine: 'chemical', date: '1969-07-16', tof: 3.16, dv: 6, m: 45 },
   },
   {
     id: 'earth-mars-1g',
@@ -32,10 +29,22 @@ export const FAMOUS_FLIGHTS: readonly FamousFlight[] = [
     spec: { from: 'earth', to: 'mars', engine: 'fusion', a: 1, v: 0.2, m: 1000 },
   },
   {
+    id: 'mariner-7-mars',
+    label: 'Mariner 7 past Mars',
+    blurb: 'Launched 27 March 1969 and flew past Mars 131 days later without braking.',
+    spec: { from: 'earth', to: 'mars', engine: 'chemical', date: '1969-03-27', tof: 131, arr: 'flyby', dv: 6, m: 25 },
+  },
+  {
+    id: 'perseverance-mars',
+    label: 'Perseverance to Mars',
+    blurb: 'Launched 30 July 2020, landed 203 days later. The atmosphere did the braking.',
+    spec: { from: 'earth', to: 'mars', engine: 'chemical', date: '2020-07-30', tof: 203, arr: 'flyby', dv: 6, m: 25 },
+  },
+  {
     id: 'new-horizons-pluto',
     label: 'New Horizons to Pluto',
-    blurb: 'The fastest launch ever, about 16 km/s. Still close to a decade.',
-    spec: { from: 'earth', to: 'pluto', engine: 'chemical', a: 3, v: kms(16.3), m: 25 },
+    blurb: 'Launched 19 January 2006, nine and a half years to Pluto. The real probe got a free boost from Jupiter; flying direct takes more fuel.',
+    spec: { from: 'earth', to: 'pluto', engine: 'chemical', date: '2006-01-19', tof: 3463, arr: 'flyby', dv: 12, m: 25 },
   },
   {
     id: 'sol-proxima',
@@ -64,7 +73,7 @@ export const FAMOUS_FLIGHTS: readonly FamousFlight[] = [
 ];
 
 /** The flight shown on a first visit with no flight in the page address. */
-export const DEFAULT_FLIGHT: FlightSpec = FAMOUS_FLIGHTS[1].spec;
+export const DEFAULT_FLIGHT: FlightSpec = (FAMOUS_FLIGHTS.find((f) => f.id === 'earth-mars-1g') as FamousFlight).spec;
 
 /** Default route when the visitor switches map without choosing anything. */
 export const DEFAULT_ROUTE = {

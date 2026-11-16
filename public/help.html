@@ -337,6 +337,7 @@
   <a href="#targets">Choosing Places</a>
   <a href="#engines">Choosing an Engine</a>
   <a href="#tuning">Tuning the Ship</a>
+  <a href="#dates">Launch Dates and Orbits</a>
 
   <div class="nav-group-label">Reading Results</div>
   <a href="#answer">The Answer Panel</a>
@@ -428,9 +429,9 @@
     </thead>
     <tbody>
       <tr><td><strong>Top bar</strong></td><td>The map switch (<strong>Solar system</strong> or <strong>Stars</strong>), the <strong>Layers</strong> menu, <strong>Share this flight</strong>, and <strong>Help</strong>, which opens this guide in a new tab.</td></tr>
-      <tr><td><strong>Flight plan (left)</strong></td><td>The From and To pickers with a swap button, five engine cards, and the tuning sliders.</td></tr>
-      <tr><td><strong>The answer (right)</strong></td><td>Two clocks (you and Earth), one plain sentence, three stat tiles, and "In perspective" comparisons.</td></tr>
-      <tr><td><strong>Playback (bottom)</strong></td><td>Fly this flight, famous flights, play and pause, speed, live readouts, and the speed chart that doubles as a scrubber.</td></tr>
+      <tr><td><strong>Flight plan (left)</strong></td><td>The From and To pickers with a swap button, five engine cards, the tuning sliders, and (on the Solar system map) the launch date and what to do at the destination.</td></tr>
+      <tr><td><strong>The answer (right)</strong></td><td>Two clocks (you and Earth), the leave and arrive dates, one plain sentence, three stat tiles, and "In perspective" comparisons.</td></tr>
+      <tr><td><strong>Playback (bottom)</strong></td><td>Fly this flight, famous flights, play and pause, speed, live readouts, the speed chart that doubles as a scrubber, and (for chemical rockets) the launch-window chart.</td></tr>
       <tr><td><strong>The map</strong></td><td>A 3D view of the solar system or the stars, with your route drawn on it.</td></tr>
     </tbody>
   </table>
@@ -438,7 +439,7 @@
 
   <!-- ────────────────────────── TARGETS ─────────────────────────────── -->
   <h2 id="targets">Choosing Places</h2>
-  <p>The <strong>Flight plan</strong> panel has two pickers: <strong>From</strong> (where you leave) and <strong>To</strong> (where you arrive). The distance between them is the straight-line distance in space.</p>
+  <p>The <strong>Flight plan</strong> panel has two pickers: <strong>From</strong> (where you leave) and <strong>To</strong> (where you arrive). On the Stars map the distance is the straight-line distance in space. On the Solar system map it depends on the date, because the planets move (see <a href="#dates">Launch Dates and Orbits</a>).</p>
 
   <h3>Searching</h3>
   <p>Click a picker and type. Search covers both maps at once, so you can find anything without switching first. It is forgiving:</p>
@@ -470,13 +471,13 @@
         <td><strong>Chemical rocket</strong></td>
         <td class="mono">0.01 – 3 g</td>
         <td class="mono">1 – 30 km/s</td>
-        <td>What we fly today. Burns for minutes, then coasts.</td>
+        <td>What we fly today. A short burn, then a long coast on an orbit round the Sun. Limited by its fuel budget, in km/s of speed change.</td>
       </tr>
       <tr>
         <td><strong>Ion drive</strong></td>
         <td class="mono">0.001 – 0.1 g</td>
         <td class="mono">up to 0.01 c</td>
-        <td>A gentle push that never stops. Very efficient, very slow to build up speed.</td>
+        <td>A tiny push, about 0.00001 g, that lasts for years. Very efficient, very slow: it spirals out from one orbit to the next.</td>
       </tr>
       <tr>
         <td><strong>Fusion torch</strong></td>
@@ -499,6 +500,7 @@
     </tbody>
   </table>
   <p>Each sublight engine remembers its own acceleration and speed-limit settings while you try the others.</p>
+  <p>On the Solar system map the engines fly in different ways. The chemical rocket and the ion drive follow curved orbits round the Sun (and round the Earth for the Moon). Fusion, antimatter and warp fly a straight line aimed at <em>where the destination will be</em> when they arrive. The next sections explain each.</p>
 
   <!-- ────────────────────────── TUNING ──────────────────────────────── -->
   <h2 id="tuning">Tuning the Ship</h2>
@@ -517,6 +519,9 @@
   <h3>Warp factor (warp drive)</h3>
   <p>For the warp drive the speed-limit slider is replaced by a warp factor from <code>1×</code> to <code>50×</code>. A factor of <code>10</code> means ten light-years covered per year on Earth.</p>
 
+  <h3>Fuel budget (chemical rocket)</h3>
+  <p>A chemical rocket cannot keep pushing, so what limits it is its fuel, measured as the total change of speed it can make, in km/s. The app counts the whole trip: from a low orbit round the starting body to a loose capture orbit at the destination. About <strong>4 km/s</strong> is enough to reach Mars in a good launch window. If a flight needs more than the budget, the answer panel says so in plain words; raise the budget, pick another date, or choose <strong>Fly past</strong>.</p>
+
   <h3>Ship mass</h3>
   <p>How heavy the ship is. It does not change the travel time; it changes the energy the trip needs, shown in "In perspective". The slider is logarithmic, and a ship class label goes with the value:</p>
   <table>
@@ -533,30 +538,61 @@
     </tbody>
   </table>
 
+  <!-- ────────────────────────── DATES ───────────────────────────────── -->
+  <h2 id="dates">Launch Dates and Orbits</h2>
+  <p>On the Solar system map the planets are not standing still, so <strong>when</strong> you leave changes the trip. The <strong>When</strong> section of the Flight plan panel holds a launch date (it starts on today's date). Change it with the date box, the month arrows or the <strong>Today</strong> button.</p>
+
+  <h3>Launch windows</h3>
+  <p>A chemical rocket coasts on an orbit round the Sun, so it has to leave when the destination will be in the right place on arrival. Good moments are called <strong>launch windows</strong>. For Earth to Mars they come about every <strong>26 months</strong>. If the date you ask for is a bad one, the ship <strong>waits for the next window</strong>. The answer panel then says, for example, "after waiting 4 mo 12 d for a launch window", and the leave date shown is the real launch date. Trips now take months: Earth to Mars is about 7 months on the default budget, and Earth to the Moon takes about 1 to 5 days.</p>
+
+  <h3>Enter orbit or Fly past</h3>
+  <p><strong>At the destination</strong> offers two choices. <strong>Enter orbit</strong> adds a braking burn so the ship is captured. <strong>Fly past</strong> skips the braking burn: it needs less fuel but the ship sweeps by at speed. If a flight is just out of fuel, Fly past often fixes it.</p>
+
+  <h3>The launch-window chart</h3>
+  <p>For a chemical rocket, the playback panel shows a <strong>launch-window chart</strong>. Each cell is one launch date and one travel time. <strong>Brighter means less fuel.</strong> Click a cell to fly exactly that launch date and travel time; a note in the Flight plan panel tells you it was picked, with a button to go back to the soonest arrival.</p>
+
+  <h3>The ion drive</h3>
+  <p>The ion drive is now a realistic low-thrust engine. It pushes about 0.00001 g for years and spirals slowly from one orbit to the other: Earth to Mars takes about <strong>2 years</strong>.</p>
+
+  <h3>Fast engines</h3>
+  <p>Fusion, antimatter and warp fly <strong>straight at where the destination will be</strong> when they arrive. The distance still depends on the date, because the destination moves.</p>
+
+  <h3>Planets move</h3>
+  <p>During playback the planets move along their orbits on the map, so you see the ship and its target meet.</p>
+
+  <h3>Real missions</h3>
+  <p>The famous flights for real missions (Apollo 11, Mariner 7, Perseverance, New Horizons) use their <strong>real launch dates</strong>.</p>
+
+  <h3>Limits</h3>
+  <div class="callout warning">
+    <div class="callout-body"><p>Planet positions are good to a fraction of a degree between the years 1800 and 2050, and to a few degrees for small bodies. There are <strong>no gravity assists yet</strong>, so New Horizons, which really used Jupiter, needs more fuel here than it did in life. Flights to or from the Sun still use the simple straight-line model. The ion spiral is an approximation. Landing on a planet and launching from the ground are not counted in the fuel.</p></div>
+  </div>
+
   <!-- ────────────────────────── ANSWER ──────────────────────────────── -->
   <h2 id="answer">The Answer Panel</h2>
   <p>The right-hand panel turns the numbers into something you can feel.</p>
 
   <h3>Two clocks</h3>
-  <p>A <strong>You age</strong> clock shows how much time passes for the crew. An <strong>Earth ages</strong> clock shows how much passes for everyone back home. Each has a bar, so the gap is visible. For slow trips the two are almost equal; for fast ones they drift far apart. Under the clocks, one plain sentence states the difference in words.</p>
+  <p>A <strong>You age</strong> clock shows how much time passes for the crew. An <strong>Earth ages</strong> clock shows how much passes for everyone back home. Each has a bar, so the gap is visible. For slow trips the two are almost equal; for fast ones they drift far apart. Under the clocks, one plain sentence states the difference in words. On the Solar system map, a quiet line under the title gives the dates ("Leaves 16 Nov 2026 · arrives 13 Jun 2027"), and says how long the ship waited if it had to wait for a launch window. If the flight needs more fuel than the engine carries, a clearly marked note says how much it needs and how much the engine has.</p>
 
   <h3>Three stat tiles</h3>
   <table>
     <thead><tr><th>Tile</th><th>Meaning</th></tr></thead>
     <tbody>
-      <tr><td><strong>Peak speed</strong></td><td>The fastest the ship goes, in km/s or as a fraction of light speed.</td></tr>
+      <tr><td><strong>Peak speed</strong></td><td>The fastest the ship goes, in km/s or as a fraction of light speed. For chemical and ion flights it is called <strong>Top speed round the Sun</strong> (or round Earth for the Moon trip), and the speed is never constant.</td></tr>
       <tr><td><strong>Lorentz γ</strong></td><td>The time-dilation factor at peak speed. One year on the ship equals γ years on Earth at that moment. It is always 1 for warp.</td></tr>
-      <tr><td><strong>Distance</strong></td><td>The straight-line distance, in the unit that reads best (km, AU or light-years).</td></tr>
+      <tr><td><strong>Fuel needed</strong></td><td>Replaces the Lorentz tile for chemical and ion flights: the total change of speed the flight needs, and how much the engine carries.</td></tr>
+      <tr><td><strong>Distance</strong></td><td>The straight-line distance, in the unit that reads best (km, AU or light-years). For chemical and ion flights it is called <strong>Path flown</strong>: the length of the curved orbit actually travelled.</td></tr>
     </tbody>
   </table>
 
   <h3>In perspective</h3>
   <p>Four comparisons put the trip in context:</p>
   <ul style="padding-left:20px; margin-bottom:16px;">
-    <li style="margin-bottom:6px;"><strong>Light travel time</strong> — how long a beam of light takes to cover the same distance.</li>
+    <li style="margin-bottom:6px;"><strong>Light travel time</strong> — how long a beam of light takes to cover the same distance (or the same curved path).</li>
     <li style="margin-bottom:6px;"><strong>A real mission</strong> — a comparison with an actual spacecraft, or with Voyager 1 for longer trips.</li>
     <li style="margin-bottom:6px;"><strong>Human scale</strong> — what the duration means in human terms, such as lifetimes.</li>
-    <li style="margin-bottom:6px;"><strong>Energy</strong> — the trip's energy compared with how much energy the whole world uses.</li>
+    <li style="margin-bottom:6px;"><strong>Energy</strong> — the trip's energy compared with how much energy the whole world uses. For chemical and ion flights it is the energy of the speed changes.</li>
   </ul>
   <div class="callout warning">
     <div class="callout-body"><p>The energy figure for a <strong>warp drive</strong> is a notional placeholder, not real physics. A real Alcubierre bubble would need exotic matter with negative energy density, and no one knows how much.</p></div>
@@ -569,7 +605,7 @@
   <h3>Controls</h3>
   <ul style="padding-left:20px; margin-bottom:16px;">
     <li style="margin-bottom:6px;"><strong>Fly this flight</strong> — starts the flight from the beginning.</li>
-    <li style="margin-bottom:6px;"><strong>Famous flights</strong> — a row of one-click flights, from Apollo to the Moon to 1 g to Andromeda.</li>
+    <li style="margin-bottom:6px;"><strong>Famous flights</strong> — a row of one-click flights, from Apollo to the Moon to 1 g to Andromeda. Real missions use their real launch dates.</li>
     <li style="margin-bottom:6px;"><strong>Play / pause</strong> — also bound to the <kbd>Space</kbd> bar.</li>
     <li style="margin-bottom:6px;"><strong>Speed</strong> — playback runs from 0.5× to 4×.</li>
   </ul>
@@ -586,7 +622,7 @@
   </table>
 
   <h3>The speed chart</h3>
-  <p>The chart plots speed against time. A sublight flight rises, may level off if it reaches its speed limit (the coast), and falls again for the braking burn. A warp flight is a flat line, because the bubble moves at one steady speed.</p>
+  <p>The chart plots speed against time. A sublight flight rises, may level off if it reaches its speed limit (the coast), and falls again for the braking burn. A warp flight is a flat line, because the bubble moves at one steady speed. A chemical flight shows a short burn, then a speed that rises and falls gently as the ship coasts round the Sun.</p>
   <p>The chart is also the <strong>scrubber</strong>: click or drag on it to jump to any moment in the flight. With the chart focused, the <kbd>←</kbd> and <kbd>→</kbd> arrow keys step through the flight.</p>
 
   <h3>Even time or Stretch the burns</h3>
@@ -616,7 +652,7 @@
   <p>Clicking an object opens a small card about it. <strong>Fly here</strong> makes it the destination, and <strong>Start here</strong> makes it the origin, so you can plan a flight entirely from the map.</p>
 
   <h3>During playback</h3>
-  <p>A <strong>ship marker</strong> travels along the path. On sublight flights a <strong>flip marker</strong> shows the point where the ship turns around to brake.</p>
+  <p>On the Solar system map the planets move along their orbits while the flight plays. A <strong>ship marker</strong> travels along the path. On sublight flights a <strong>flip marker</strong> shows the point where the ship turns around to brake.</p>
 
   <h3>Layers</h3>
   <p>The <strong>Layers</strong> menu in the top bar switches map details on and off:</p>
@@ -629,7 +665,7 @@
 
   <!-- ────────────────────────── SHARING ─────────────────────────────── -->
   <h2 id="sharing">Sharing a Flight</h2>
-  <p>Press <strong>Share this flight</strong> in the top bar. The app copies a link and briefly shows <strong>Link copied</strong>. The whole flight (places, engine and settings) lives in the page address, so anyone who opens the link sees exactly the same plan. You can also bookmark the address or copy it from the browser's address bar.</p>
+  <p>Press <strong>Share this flight</strong> in the top bar. The app copies a link and briefly shows <strong>Link copied</strong>. The whole flight (places, engine, settings and the launch date) lives in the page address, so anyone who opens the link sees exactly the same plan. You can also bookmark the address or copy it from the browser's address bar.</p>
 
   <!-- ────────────────────────── PHONES ──────────────────────────────── -->
   <h2 id="phones">Phones and Tablets</h2>
@@ -697,7 +733,7 @@
   <!-- ────────────────────────── CATALOGS ────────────────────────────── -->
   <h2 id="catalogs">Data Catalogs</h2>
   <h3>Solar System</h3>
-  <p>Generated from the <strong>JPL Horizons</strong> ephemeris service. Each body has its real 3D position in AU, centred on the Sun, and an orbit path for drawing. The set includes the Sun, the eight planets, the Moon, dwarf planets, asteroids and spacecraft.</p>
+  <p>Generated from the <strong>JPL Horizons</strong> ephemeris service, together with orbit elements used to place the planets on any date (see the limits in <a href="#dates">Launch Dates and Orbits</a>). Each body has its 3D position in AU, centred on the Sun, and an orbit path for drawing. The set includes the Sun, the eight planets, the Moon, dwarf planets, asteroids and spacecraft.</p>
 
   <h3>Stars and beyond</h3>
   <p>A merged dataset from three sources:</p>
@@ -716,6 +752,8 @@
       <tr><td><strong>Coordinate Time (t)</strong></td><td>Time measured by a stationary observer, such as someone on Earth (the "Earth ages" clock).</td></tr>
       <tr><td><strong>Lorentz Factor (γ)</strong></td><td>The ratio of Earth time to ship time at a given speed. At 0.99 c, γ is about 7.09. At 0.999 c, γ is about 22.4.</td></tr>
       <tr><td><strong>Proper Acceleration</strong></td><td>The acceleration felt inside the ship, what a scale on board would read.</td></tr>
+      <tr><td><strong>Launch window</strong></td><td>A stretch of dates when the planets are placed so a flight needs little fuel. For Earth to Mars, about every 26 months.</td></tr>
+      <tr><td><strong>Delta-v (fuel budget)</strong></td><td>The total change of speed a ship can make, in km/s. It is the natural way to measure how much fuel a rocket carries.</td></tr>
       <tr><td><strong>Flip and brake</strong></td><td>The standard deep-space manoeuvre: accelerate, turn the ship around, then decelerate to arrive at rest.</td></tr>
       <tr><td><strong>Coast</strong></td><td>A stretch at constant speed in the middle of the flight, used when the ship reaches its speed limit before the halfway point.</td></tr>
       <tr><td><strong>Alcubierre Metric</strong></td><td>A solution to Einstein's equations describing a "warp bubble" that allows apparent faster-than-light travel without breaking relativity locally.</td></tr>
