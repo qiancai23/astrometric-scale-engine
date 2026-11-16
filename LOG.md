@@ -275,3 +275,4 @@ All five interface agents were stopped by the account's usage limit before writi
 * Committed the whole redesign as one local commit on `main` (the pieces depend on each other; splitting would leave commits that do not build). Not pushed: pushing to `main` deploys the live site through Cloudflare, so that waits for Bruce's go-ahead.
 * `output.txt` (scratch dump of Gaia warnings) added to `.gitignore` instead of being committed. `PROMPT.md` (the original design-review prompt) was committed.
 * Files changed: `.gitignore`, `LOG.md`, `HANDOFF.md`.
+* Later the same round: Bruce said "Push" and "keep the cap at 0.999 for now". Pushed `47e0201` to `origin/main` (triggers Cloudflare deployment; result not checked). No sixth unlimited engine. HANDOFF.md updated to match.

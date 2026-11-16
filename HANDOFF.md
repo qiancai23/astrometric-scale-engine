@@ -5,10 +5,10 @@ Last updated: 2026-11-15 (fifth round of the day)
 ## Project goal
 Astrometric Scale Engine: a browser app (React 18, TypeScript, Vite 6, Zustand, Three.js) that answers "how long does it take to get there, and how much less do you age than the people you left behind?" The visitor picks an origin and a destination (planets and moons in the solar system, or stars, exoplanets and deep-sky objects), picks one of five engines (chemical rocket, ion drive, fusion torch, antimatter rocket, warp drive), and sees the travel time on the ship and on Earth, with a 3D map and a playable flight.
 
-Live site: https://astro.brucedgates.com/ (Cloudflare). Repository: https://github.com/qiancai23/astrometric-scale-engine. **The live site still shows the old design.** The redesign exists only in the local working tree.
+Live site: https://astro.brucedgates.com/ (Cloudflare, deploys on push to `main`). Repository: https://github.com/qiancai23/astrometric-scale-engine.
 
-## Current state: the redesign is built, verified locally, committed locally on `main`, not pushed, not deployed
-The whole redesign is one local commit on `main` ("Redesign: full-window map, flight plan, answer and playback panels"). It has not been pushed; pushing to `main` deploys the live site through Cloudflare.
+## Current state: the redesign is committed and pushed to `main`
+The whole redesign is one commit on `main` (`47e0201`, "Redesign: full-window map, flight plan, answer and playback panels"), pushed on 2026-11-15. The push should trigger the Cloudflare deployment of the live site; whether that deployment succeeded has not been checked.
 
 The owner (Bruce) approved the design review (`UIUX/DESIGN_REVIEW_2026-11-15.md`) and asked for the build. It is done:
 
@@ -27,12 +27,11 @@ Verified: 107 Jest tests pass, the TypeScript check is clean, the production bui
 
 ## Next steps
 1. Bruce looks at it on a real screen and a real phone: `npm run dev`, then open the address Vite prints. Things most likely to need tuning are listed under "Where to tune" below.
-2. Push (`git push origin main`) once Bruce approves; this triggers the Cloudflare deployment of the live site. Committed but not pushed.
+2. Confirm https://astro.brucedgates.com/ now shows the new design (Cloudflare build may take a few minutes; if it still shows the old design, check the Cloudflare Pages build log, which may need a Node version that supports Vite 6).
 3. Optional follow-ups, none started: load the star catalog on demand so the first screen appears sooner (the catalog is a 1 MB chunk loaded before the interface); stop the object card on the map from covering the origin or the path; delete the unused duplicate catalogs in `src/scripts/`.
 
 ## Open questions for Bruce
-1. **Speed limit against the Andromeda story.** With the 0.999 c limit, "1 g to Andromeda" takes about 114,000 years of ship time. The famous "28 years to Andromeda" result needs an engine with no speed limit. Decision needed: keep 0.999 c as the top (current state), or add a sixth, unlimited "torchship" engine. If unanswered, it stays at 0.999 c.
-2. **Push and deploy.** Whether to push now (the live site switches to the redesign immediately) or after checking on a real screen and phone. If unanswered, nothing is pushed.
+- None pending. Decided 2026-11-15: keep the 0.999 c top speed "for now" (no unlimited sixth engine yet; "1 g to Andromeda" stays at about 114,000 years of ship time). Bruce may revisit this.
 
 ## Key file paths
 - `UIUX/BUILD_SPEC_2026-11-15.md` — the contract the redesign was built against: decisions, rules, design tokens, motion requirements, layout, who owns which files. Read this before changing the interface.
